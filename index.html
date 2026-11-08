@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>나의 방탈일지</title>
+<style>
+  :root {
+    --bg: #0f0e0c;
+    --panel: #1a1815;
+    --panel-2: #23201c;
+    --line: #34302a;
+    --ink: #ece6da;
+    --muted: #8f877a;
+    --gold: #d9a441;
+    --red: #c4473a;
+    --green: #5fa66b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+    background: radial-gradient(ellipse at 20% 0%, #221d16 0%, var(--bg) 60%);
+    color: var(--ink);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+  button { font: inherit; cursor: pointer; }
+
+  /* ── 상단: 왼쪽 큰 타이틀 / 오른쪽 기록 리스트 ── */
+  .top {
+    max-width: 1200px; margin: 0 auto; padding: 48px 28px 24px;
+    display: grid; grid-template-columns: 1fr 480px; gap: 32px; align-items: start;
+  }
+  .title .eyebrow {
+    font-size: 13px; letter-spacing: .3em; color: var(--gold); font-weight: 600;
+  }
+  .title h1 {
+    font-family: "Nanum Myeongjo", "Batang", Georgia, serif;
+    font-size: clamp(48px, 7vw, 92px); line-height: 1.05; letter-spacing: -.02em;
+    margin: 14px 0 18px;
+  }
+  .title h1 em { font-style: normal; color: var(--gold); }
+  .title p { color: var(--muted); max-width: 560px; word-break: keep-all; }
+  .title .counts { display: flex; gap: 28px; margin-top: 28px; }
+  .title .counts div b { display: block; font-size: 30px; color: var(--ink); }
+  .title .counts div small { color: var(--muted); font-size: 13px; }
+
+  /* 기록 패널 */
+  .log {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    overflow: hidden;
+  }
+  .log header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 18px; border-bottom: 1px solid var(--line);
+  }
+  .log header h2 { font-size: 15px; }
+  .log header small { color: var(--muted); font-size: 12px; }
+  .log-list { max-height: 420px; overflow-y: auto; }
+  .log-item { border-bottom: 1px solid var(--line); }
+  .log-item:last-child { border-bottom: 0; }
+  .log-row {
+    width: 100%; background: none; border: 0; color: inherit; text-align: left;
+    display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center;
+    padding: 12px 18px;
+  }
+  .log-row:hover { background: var(--panel-2); }
+  .log-row .name b { display: block; font-size: 15px; }
+  .log-row .name small { color: var(--muted); font-size: 12.5px; }
+  .stars { color: var(--gold); font-size: 13px; letter-spacing: 1px; white-space: nowrap; }
+  .badge {
+    font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 4px; white-space: nowrap;
+  }
+  .badge.ok { background: rgba(95,166,107,.15); color: var(--green); }
+  .badge.no { background: rgba(196,71,58,.15); color: var(--red); }
+  .log-detail {
+    display: none; padding: 4px 18px 16px;
+    font-size: 13px; color: #cfc7b8;
+  }
+  .log-item.open .log-detail { display: flex; gap: 14px; align-items: flex-start; }
+  .log-detail dl { flex: 1; }
+  .poster {
+    width: 130px; height: auto; flex-shrink: 0; border-radius: 6px; border: 1px solid var(--line);
+    background: var(--panel-2);
+  }
+  .log-row .thumb { width: 30px; height: 42px; object-fit: cover; border-radius: 3px; }
+  .log-detail dl { display: grid; grid-template-columns: 96px 1fr; gap: 4px 10px; }
+  .log-detail dt { color: var(--muted); }
+  .log-row .name small .no { color: #5f5850; margin-right: 4px; }
+
+  /* 오른쪽 위 작은 링크 */
+  .sites { display: flex; justify-content: flex-end; gap: 12px; margin-bottom: 8px; }
+  .sites a {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; color: var(--muted); text-decoration: none; opacity: .8;
+  }
+  .sites a:hover { color: var(--ink); opacity: 1; }
+  .sites img { width: 13px; height: 13px; border-radius: 3px; }
+
+  /* 검색 · 필터 */
+  .tools { padding: 10px 18px; border-bottom: 1px solid var(--line); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .tools input {
+    flex: 1; min-width: 150px; background: #0c0b0a; border: 1px solid var(--line); color: var(--ink);
+    border-radius: 6px; padding: 6px 10px; font: inherit; font-size: 13px;
+  }
+  .tools input:focus { outline: none; border-color: var(--gold); }
+  .filters { display: flex; gap: 4px; }
+  .filters button {
+    background: none; border: 1px solid var(--line); color: var(--muted);
+    border-radius: 999px; padding: 3px 9px; font-size: 12px;
+  }
+  .filters button.on { background: var(--gold); border-color: var(--gold); color: #1a1408; font-weight: 600; }
+  .empty { padding: 24px; text-align: center; color: var(--muted); font-size: 13px; }
+
+  /* 평가 7단계 */
+  .rate { font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
+  .r-흙길 { background: #3a2e22; color: #b08c68; }
+  .r-흙풀길 { background: #34331f; color: #b0a868; }
+  .r-풀길 { background: #24331f; color: #8fbf73; }
+  .r-풀꽃길 { background: #1f3330; color: #7fc4b0; }
+  .r-꽃길 { background: #3a2433; color: #e59ac8; }
+  .r-꽃밭길 { background: #45213a; color: #ff8fd0; }
+  .r-인생테마 { background: var(--gold); color: #1a1408; }
+
+  /* ── 메인: 방탈출 퀴즈 ── */
+  main { max-width: 1200px; margin: 0 auto; padding: 16px 28px 72px; }
+  .room {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    padding: 36px; position: relative; overflow: hidden;
+  }
+  .room::before {
+    content: ""; position: absolute; inset: 0;
+    background: repeating-linear-gradient(90deg, transparent 0 79px, rgba(255,255,255,.015) 79px 80px);
+    pointer-events: none;
+  }
+  .hud {
+    display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;
+    margin-bottom: 28px; position: relative;
+  }
+  .hud .stage { font-size: 13px; letter-spacing: .2em; color: var(--gold); font-weight: 600; }
+  .timer {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 28px; color: var(--red); letter-spacing: .05em;
+  }
+  .progress { display: flex; gap: 6px; }
+  .progress span { width: 28px; height: 6px; border-radius: 3px; background: var(--line); }
+  .progress span.done { background: var(--gold); }
+  .progress span.now { background: var(--ink); }
+
+  .screen { position: relative; }
+  .screen h3 {
+    font-family: "Nanum Myeongjo", "Batang", Georgia, serif;
+    font-size: 32px; margin-bottom: 14px;
+  }
+  .screen .story { color: #cfc7b8; max-width: 720px; white-space: pre-line; }
+  .clue {
+    margin: 24px 0; padding: 22px; border: 1px dashed #4a443b; border-radius: 8px;
+    background: var(--panel-2); font-size: 17px; white-space: pre-line;
+  }
+  .clue img { max-width: 100%; border-radius: 6px; display: block; margin-top: 12px; }
+
+  .lock { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .lock input {
+    background: #0c0b0a; border: 1px solid var(--line); color: var(--ink);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 20px; letter-spacing: .15em;
+    padding: 12px 16px; border-radius: 8px; width: 260px;
+  }
+  .lock input:focus { outline: none; border-color: var(--gold); }
+  .btn {
+    border: 0; border-radius: 8px; padding: 13px 22px; font-weight: 600;
+    background: var(--gold); color: #1a1408;
+  }
+  .btn.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+  .btn.ghost:hover { color: var(--ink); }
+  .msg { margin-top: 14px; min-height: 24px; font-size: 14.5px; }
+  .msg.bad { color: var(--red); }
+  .msg.good { color: var(--green); }
+  .hint {
+    margin-top: 10px; padding: 12px 16px; border-left: 3px solid var(--gold);
+    background: rgba(217,164,65,.08); color: #e4d3ad; font-size: 14.5px; display: none;
+  }
+  .hint.show { display: block; }
+  .shake { animation: shake .35s; }
+  @keyframes shake {
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+  }
+  .center { text-align: center; padding: 28px 0; }
+  .center .big { font-size: 56px; margin-bottom: 8px; }
+  .center p { color: #cfc7b8; margin: 0 auto 22px; }
+  .stat-line { color: var(--muted); font-size: 14px; margin-top: 8px; }
+
+  /* 스토리 · 그림 · 방향 자물쇠 */
+  .gallery { display: grid; gap: 12px; margin: 22px 0 6px; }
+  .gallery.n1 { grid-template-columns: 1fr; }
+  .gallery.n2 { grid-template-columns: 1fr 1fr; }
+  .gallery.n3 { grid-template-columns: 1fr 1fr; }
+  .gallery.n3 img:first-child { grid-column: span 2; }
+  .gallery img { width: 100%; border-radius: 8px; border: 1px solid var(--line); cursor: zoom-in; display: block; }
+  .tip { color: var(--muted); font-size: 12.5px; margin-bottom: 18px; }
+  .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.92); z-index: 50; display: flex; align-items: center; justify-content: center; cursor: zoom-out; }
+  .lightbox img { max-width: 96vw; max-height: 92vh; border-radius: 6px; }
+  .lightbox span { position: absolute; top: 18px; right: 24px; color: #ccc; font-size: 14px; }
+  .roomtimer { display: inline-block; margin-bottom: 14px; padding: 6px 14px; border-radius: 6px; background: rgba(196,71,58,.15);
+    color: var(--red); font-family: ui-monospace, Menlo, monospace; font-size: 26px; letter-spacing: .05em; }
+  .roomtimer.urgent { animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { opacity: .35; } }
+  .dirlock { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+  .dirshow { min-width: 260px; min-height: 44px; padding: 8px 16px; border-radius: 8px; background: #0c0b0a; border: 1px solid var(--line);
+    font-size: 26px; letter-spacing: .2em; color: var(--gold); }
+  .dirpad { display: grid; grid-template-columns: repeat(3, 64px); gap: 6px; }
+  .dirpad button { height: 56px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); color: var(--ink); font-size: 24px; }
+  .dirpad button:hover { border-color: var(--gold); }
+  .dirpad button.clr { font-size: 12.5px; color: var(--muted); }
+  .center.fail h3 { color: var(--red); }
+  .tmeta2 { display: flex; gap: 22px; justify-content: center; color: #cfc7b8; font-size: 14px; margin: -2px 0 16px; flex-wrap: wrap; }
+  .tmeta2 i { font-style: normal; color: var(--gold); letter-spacing: 1px; } .tmeta2 i.off { color: #4a443b; }
+  .tmeta2 b { color: var(--ink); }
+  .intro .warn { color: #e2675a; font-size: 13.5px; margin-top: 8px; line-height: 1.7; }
+  .poster, .tposter { cursor: zoom-in; }
+  .tops { position: relative; }
+  .tops.collapsed .top-card:nth-of-type(n+2) { display: none; }
+  .tops.collapsed .top-card.r1 { margin-bottom: 0; }
+  .top-toggle { grid-column: 1 / -1; justify-self: center; margin-top: 4px; background: transparent; border: 1px solid var(--line); color: var(--ink);
+    border-radius: 999px; padding: 8px 22px; font-size: 13.5px; }
+  .top-toggle:hover { border-color: var(--gold); color: var(--gold); }
+  .divider { margin: 40px 0 0; overflow: hidden; }
+  .tape { display: flex; justify-content: space-around; align-items: center; overflow: hidden; height: 46px;
+    background: #e6c13a; border-top: 6px solid transparent; border-bottom: 6px solid transparent;
+    border-image: repeating-linear-gradient(-45deg, #141210 0 14px, #e6c13a 14px 28px) 6; box-shadow: 0 6px 20px rgba(0,0,0,.6); }
+  .tape span { flex-shrink: 0; color: #141210; font-weight: 800; letter-spacing: .18em; font-size: 14px; white-space: nowrap; }
+  .tape span:not(:last-child)::after { content: "·"; margin-left: 2.2vw; }
+  @media (max-width: 1100px) { .tape span:nth-child(n+6) { display: none; } }
+  @media (max-width: 700px) { .tape span:nth-child(n+4) { display: none; } }
+  .part-head { max-width: 1200px; margin: 0 auto; padding: 44px 28px 18px; }
+  .part-head .eyebrow { font-size: 13px; letter-spacing: .3em; color: var(--gold); font-weight: 600; }
+  .part-head h2 { font-family: "Nanum Myeongjo", "Batang", Georgia, serif; font-size: 34px; margin: 8px 0 6px; }
+  .part-head p { color: var(--muted); }
+  footer { text-align: center; padding: 30px 20px 46px !important; border-top: 1px solid var(--line); margin-top: 20px; }
+  .totop { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; background: var(--panel); border: 1px solid var(--line); color: var(--gold);
+    border-radius: 50%; width: 58px; height: 58px; justify-content: center; font-size: 15px; margin-bottom: 18px; transition: transform .2s, border-color .2s; }
+  .totop span { font-size: 10px; letter-spacing: .15em; color: var(--muted); }
+  .totop:hover { transform: translateY(-4px); border-color: var(--gold); }
+  .foot-line { color: #cfc7b8; font-size: 14px; letter-spacing: .03em; } .foot-line i { font-style: normal; color: #4a443b; margin: 0 8px; }
+  .foot-sub { color: var(--muted); font-size: 12.5px; margin-top: 8px; } .foot-sub span { color: var(--gold); font-weight: 700; }
+  .foot-copy { color: #5f5850; font-size: 11.5px; margin-top: 6px; }
+  .room::after { content: ""; position: absolute; inset: 0; background: url(img/theme-poster.jpg) center 62% / cover no-repeat; opacity: 0; transition: opacity 1.2s; pointer-events: none; }
+  .room.cover::after { opacity: .17; }
+  .room > * { position: relative; z-index: 1; }
+  /* TOP 5 */
+  .tops { max-width: 1200px; margin: 0 auto; padding: 8px 28px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .top-col h2 { font-size: 17px; margin-bottom: 14px; letter-spacing: .02em; }
+  .top-col.horror h2 { color: #e2675a; }
+  .top-card { display: grid; grid-template-columns: 34px 78px 1fr; gap: 14px; align-items: center; padding: 12px 14px; margin-bottom: 10px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px; transition: transform .2s, border-color .2s; }
+  .top-card:hover { transform: translateX(4px); border-color: var(--gold); }
+  .top-col.horror .top-card:hover { border-color: #b8433a; }
+  .top-card .rank { font-family: "Nanum Myeongjo", Georgia, serif; font-size: 30px; font-weight: 700; color: var(--muted); text-align: center; }
+  .top-card.r1 .rank { color: #e6c05a; font-size: 38px; } .top-card.r2 .rank { color: #c9ccd2; } .top-card.r3 .rank { color: #c98a52; }
+  .top-card.r1 { border-color: rgba(230,192,90,.45); background: linear-gradient(90deg, rgba(230,192,90,.08), var(--panel) 60%); }
+  .top-col.horror .top-card.r1 { border-color: rgba(196,71,58,.5); background: linear-gradient(90deg, rgba(196,71,58,.12), var(--panel) 60%); }
+  .tposter { width: 78px; height: 104px; object-fit: cover; border-radius: 6px; border: 1px solid var(--line); background: var(--panel-2); }
+  .tinfo b { display: block; font-size: 16px; } .tinfo small { color: var(--muted); font-size: 12.5px; }
+  .tmeta { display: flex; gap: 6px; margin: 6px 0 4px; }
+  .tline { color: #a39b8d; font-size: 12px; }
+  @media (max-width: 900px) { .tops { grid-template-columns: 1fr; } }
+  /* ── v2 연출 ── */
+  #screen { transition: opacity .45s ease; }
+  #screen.fade { opacity: 0; }
+  .room { box-shadow: inset 0 0 calc(var(--danger, 0) * 220px) rgba(170, 20, 10, calc(var(--danger, 0) * .8)); transition: box-shadow 1s; }
+  .sstage { position: relative; margin: 22px 0 8px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: #000; cursor: zoom-in; user-select: none; }
+  .sstage.has-spots, .sstage.dark, .sstage.hide { cursor: default; }
+  .sstage .kb { position: relative; animation: kb 26s ease-in-out infinite alternate; transform-origin: 50% 55%; }
+  .sstage.dark .kb, .sstage.has-spots .kb { animation-duration: 40s; }
+  @keyframes kb { from { transform: scale(1); } to { transform: scale(1.06) translate(-1%, -1%); } }
+  .sstage img.base { width: 100%; display: block; }
+  .sstage img.ov { position: absolute; inset: 0; width: 100%; pointer-events: none; }
+  .ov.flicker { opacity: 0; animation: flick 5.5s infinite; }
+  @keyframes flick { 0%, 62% { opacity: 0; } 63% { opacity: .85; } 64% { opacity: .1; } 65% { opacity: .7; } 67% { opacity: 0; }
+    84% { opacity: 0; } 85% { opacity: .5; } 86% { opacity: 0; } 100% { opacity: 0; } }
+  .spot { position: absolute; background: transparent; border: 0; border-radius: 10px; cursor: pointer; }
+  .spot::after { content: ""; position: absolute; inset: 0; border-radius: 10px; box-shadow: 0 0 0 2px rgba(255, 220, 150, .0); animation: spotpulse 3s infinite; }
+  .spot:hover::after { box-shadow: 0 0 0 2px rgba(255, 220, 150, .6), 0 0 24px rgba(255, 210, 120, .35); animation: none; }
+  @keyframes spotpulse { 0%, 70%, 100% { box-shadow: 0 0 0 2px rgba(255, 220, 150, 0); } 80% { box-shadow: 0 0 0 2px rgba(255, 220, 150, .25), 0 0 18px rgba(255, 210, 120, .2); } }
+  .torch { position: absolute; inset: 0; pointer-events: none; --x: 50%; --y: 55%;
+    background: radial-gradient(circle at var(--x) var(--y), rgba(0,0,0,0) 0, rgba(0,0,0,.15) 70px, rgba(0,0,0,.92) 150px, rgba(0,0,0,.985) 230px); }
+  .sstage.dark .kb { filter: brightness(.85) contrast(1.05); }
+  .tvfx { position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 2px, transparent 2px 4px); animation: tvflick .18s infinite steps(2); }
+  @keyframes tvflick { 0% { opacity: .55; } 100% { opacity: .9; } }
+  .sstage.tv .kb { animation: tvshake 6s infinite; }
+  @keyframes tvshake { 0%, 90%, 100% { transform: scale(1.02); filter: none; } 91% { transform: scale(1.03) translateX(-6px); filter: brightness(1.6) contrast(1.4); } 92% { transform: scale(1.02) translateX(4px); } 93% { filter: none; } }
+  .gap { position: absolute; inset: 0; pointer-events: none; }
+  .sstage.hide { animation: hshake .12s infinite; animation-play-state: paused; }
+  .story.after { margin-top: 10px; min-height: 1em; }
+  .story { cursor: default; }
+  .phint { margin-bottom: 14px; background: #2f6a8a; color: #fff; }
+  .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.93); z-index: 50; display: flex; cursor: zoom-out; overflow: auto; padding: 40px 30px; }
+  .lb-inner { display: flex; flex-direction: column; gap: 14px; align-items: center; max-width: 96vw; margin: auto; }
+  .lb-inner img { max-width: min(96vw, 1400px); max-height: 82vh; border-radius: 6px; }
+  .lb-title { color: var(--gold); font-weight: 700; letter-spacing: .1em; }
+  .lightbox > span { position: fixed; top: 18px; right: 24px; color: #ccc; font-size: 14px; cursor: pointer; }
+  .tip { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+  .mute { background: none; border: 1px solid var(--line); color: var(--ink); border-radius: 6px; padding: 4px 10px; font-size: 16px; }
+  .intro .eyebrow2 { color: var(--gold); letter-spacing: .3em; font-size: 13px; font-weight: 600; }
+  .intro .ttl { font-size: 54px; margin: 8px 0 14px; letter-spacing: .05em; }
+  .intro .credit { color: var(--muted); font-size: 13.5px; white-space: pre-line; }
+  .intro hr { border: 0; border-top: 1px solid var(--line); width: 60%; margin: 22px auto; }
+  .intro .sound { color: var(--gold); }
+  .end-mark { opacity: 0; transition: opacity 2s; font-size: 22px; margin: 16px 0 !important; }
+  .end-mark.show { opacity: 1; }
+  /* ── v3 연출 ── */
+  .slides { position: relative; margin: 20px auto 12px; max-width: 680px; border-radius: 10px; overflow: hidden; background: #000; aspect-ratio: 4 / 3; max-height: 0; transition: max-height 1s; border: 1px solid var(--line); }
+  .slides.on { max-height: 1200px; }
+  .slides img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; transform: scale(1.04); transition: opacity .7s, transform 3s ease-out; }
+  .slides img.in { opacity: 1; transform: scale(1); }
+  .slides img.final { cursor: zoom-in; transition: opacity 2s, transform 6s ease-out; }
+  .slides:has(img.final) { aspect-ratio: 16 / 10; max-width: 820px; }
+
+  .snoise { position: absolute; inset: 0; pointer-events: none; background: url(img/static.png); opacity: .55; mix-blend-mode: screen; animation: stat .25s steps(4) infinite; }
+  @keyframes stat { 0% { background-position: 0 0; } 25% { background-position: -91px 47px; } 50% { background-position: 63px -120px; } 75% { background-position: -150px -33px; } }
+  .roll { position: absolute; left: 0; right: 0; height: 18%; pointer-events: none; background: linear-gradient(transparent, rgba(255,255,255,.12), rgba(0,0,0,.5), transparent); animation: roll 3.2s linear infinite; }
+  @keyframes roll { from { top: -20%; } to { top: 110%; } }
+  .sstage.snuff .kb { animation: snuffjit 4s infinite; filter: contrast(1.25) brightness(.8) blur(.6px); }
+  @keyframes snuffjit { 0%, 30%, 34%, 70%, 73%, 100% { transform: none; opacity: 1; } 31% { transform: translateX(-14px) skewX(4deg); opacity: .5; } 32% { transform: translateX(10px); opacity: .9; } 71% { transform: translateY(6px); opacity: .3; } 72% { opacity: 0; } }
+  .ending-img { width: 100%; border-radius: 10px; margin: 18px 0 10px; opacity: 0; transition: opacity 2.5s; cursor: zoom-in; border: 1px solid var(--line); }
+  .ending-img.show { opacity: 1; }
+  .photos { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; opacity: 0; transition: opacity 1.5s 1s; margin-bottom: 8px; }
+  .photos.show { opacity: 1; }
+  .photos img { width: 150px; border: 6px solid #ece6d8; border-bottom-width: 18px; cursor: zoom-in; transform: rotate(var(--r)); box-shadow: 0 6px 18px rgba(0,0,0,.6); }
+  .photos img:hover { transform: rotate(0) scale(1.05); }
+
+  .finding .spot::after { animation: findpulse 3.5s infinite; animation-delay: var(--d, 0s); }
+  @keyframes findpulse { 0%, 55%, 100% { box-shadow: 0 0 0 0 rgba(255,214,60,0); } 65%, 80% { box-shadow: 0 0 0 3px rgba(255,214,60,.85), 0 0 22px rgba(255,200,40,.45); } }
+  .finding .spot:hover::after { box-shadow: 0 0 0 3px rgba(255,214,60,.95), 0 0 26px rgba(255,200,40,.5); animation: none; }
+
+  .intro .poster-img { width: min(380px, 82%); border-radius: 6px; box-shadow: 0 10px 40px rgba(0,0,0,.7); margin: 22px auto 0; display: block; cursor: zoom-in; }
+  #screen.walk { animation: walkbob .6s ease-in-out 3; }
+  @keyframes walkbob { 0%, 100% { transform: translateY(0); filter: brightness(1); } 50% { transform: translateY(6px); filter: brightness(.6); } }
+  .fog { position: absolute; inset: 0; pointer-events: none; background: rgba(10,14,18,.35); }
+  .fog i { position: absolute; inset: -20% -40%; background:
+      radial-gradient(ellipse 40% 25% at 30% 70%, rgba(150,160,165,.55), transparent 70%),
+      radial-gradient(ellipse 35% 20% at 70% 80%, rgba(140,150,155,.5), transparent 70%),
+      radial-gradient(ellipse 50% 30% at 50% 95%, rgba(170,178,180,.6), transparent 70%),
+      radial-gradient(ellipse 30% 18% at 15% 40%, rgba(130,140,145,.35), transparent 70%),
+      radial-gradient(ellipse 30% 18% at 85% 45%, rgba(130,140,145,.35), transparent 70%);
+    filter: blur(14px); animation: fogmove 30s linear infinite alternate; }
+  .fog i:nth-child(2) { animation-duration: 44s; animation-direction: alternate-reverse; opacity: .8; transform: scaleX(-1); }
+  .fog i:nth-child(3) { animation-duration: 60s; opacity: .55; top: -40%; }
+  @keyframes fogmove { from { transform: translateX(-12%); } to { transform: translateX(12%); } }
+  .passer { position: absolute; left: 12.8%; top: 30.4%; width: 13.9%; height: 23.2%; overflow: hidden; pointer-events: none; }
+  .passer svg { position: absolute; bottom: -8%; height: 120%; left: -60%; opacity: 0; }
+  .passer.go svg { animation: pass 4.2s linear, bob .55s ease-in-out 8; }
+  @keyframes bob { 50% { transform: translateY(4%); } }
+  @keyframes pass { 0% { left: -60%; opacity: .95; } 100% { left: 130%; opacity: .95; } }
+  .count { position: absolute; top: 14px; right: 18px; font-family: ui-monospace, Menlo, monospace; font-size: 54px; font-weight: 700; color: #fff;
+    text-shadow: 0 0 18px rgba(255,40,20,.8); }
+  .count.hot { color: #ff3b2a; animation: pulse .5s infinite; }
+  .shadow { position: absolute; top: -10%; height: 130%; width: 60%; left: -70%; filter: blur(18px);
+    background: radial-gradient(ellipse 30% 14% at 50% 14%, #000 60%, transparent 100%), radial-gradient(ellipse 48% 60% at 50% 70%, #000 55%, transparent 100%); }
+  .shadow.pass { animation: shadowpass 7.5s ease-in-out forwards; }
+  @keyframes shadowpass { 0% { left: -70%; } 35% { left: 18%; } 62% { left: 24%; } 100% { left: 120%; } }
+  .jump { position: fixed; inset: 0; z-index: 100; background: #000; display: flex; align-items: center; justify-content: center; animation: jflash .1s steps(2) 3; }
+  .jump svg { width: min(120vh, 120vw); animation: jzoom .18s cubic-bezier(.2,1.6,.4,1) forwards, jshake .07s infinite; }
+  @keyframes jzoom { from { transform: scale(.25); } to { transform: scale(1.02); } }
+  @keyframes jshake { 50% { translate: 8px -6px; } }
+  @keyframes jflash { 0% { background: #fff; } 100% { background: #000; } }
+  .jump img { width: min(86vw, 120vh); height: auto; max-height: 82vh; object-fit: contain; filter: contrast(1.45) brightness(1.1); animation: jzoom .18s cubic-bezier(.2,1.6,.4,1) forwards, jshake .07s infinite; }
+  .jscan { position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(0,0,0,.35) 0 2px, transparent 2px 5px); animation: tvflick .1s infinite steps(2); pointer-events: none; }
+  .next-theme { position: relative; margin-top: 26px; padding: 34px 36px; border-radius: 14px; border: 1px dashed #4a443b; overflow: hidden;
+    display: flex; align-items: center; gap: 28px; background: repeating-linear-gradient(135deg, #15130f 0 14px, #18160f 14px 28px); filter: grayscale(.3); }
+  .next-theme .nt-text h3 { font-family: "Nanum Myeongjo", "Batang", Georgia, serif; font-size: 30px; color: #8f877a; margin: 4px 0 6px; }
+  .next-theme .nt-text p { color: #6c655a; font-size: 14px; }
+  .next-theme .eyebrow2 { color: var(--gold); letter-spacing: .3em; font-size: 13px; font-weight: 600; opacity: .7; }
+  .next-theme .nt-lock { flex-shrink: 0; animation: ntshake 6s infinite; transform-origin: 50% 20%; }
+  @keyframes ntshake { 0%, 90%, 100% { transform: rotate(0); } 92% { transform: rotate(-6deg); } 94% { transform: rotate(5deg); } 96% { transform: rotate(-3deg); } }
+  .next-theme .nt-chain { position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(-12deg, transparent 47%, rgba(120,110,90,.25) 47%, rgba(120,110,90,.25) 53%, transparent 53%),
+                linear-gradient(12deg, transparent 47%, rgba(120,110,90,.18) 47%, rgba(120,110,90,.18) 53%, transparent 53%); }
+  footer { text-align: center; color: var(--muted); font-size: 12.5px; padding-bottom: 32px; }
+
+  @media (max-width: 900px) {
+    .top { grid-template-columns: 1fr; }
+    .room { padding: 24px; }
+    .lock input { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ───────── 상단 ───────── -->
+<section class="top">
+  <div class="title">
+    <div class="eyebrow">PART 01 · MY HOBBY · ESCAPE ROOM</div>
+    <h1>나의<br><em>방탈</em>일지</h1>
+    <p>지금까지 다녀온 테마를 기록하고, 직접 만든 방탈출 문제를 남겨둡니다.</p>
+    <div class="counts">
+      <div><b><span id="cntTotal">0</span>방</b><small>다녀온 테마</small></div>
+      <div><b><span id="cntClear">0</span>방</b><small>클리어</small></div>
+      <div><b id="cntRate">0%</b><small>탈출 성공률</small></div>
+    </div>
+  </div>
+
+  <div class="side">
+    <div class="sites">
+      <a href="https://bbabang.net/" target="_blank" rel="noopener" title="빠른방탈출">
+        <img src="https://www.google.com/s2/favicons?domain=bbabang.net&sz=64" alt="" onerror="this.remove()">빠른방탈출
+      </a>
+      <a href="https://colory.dev/" target="_blank" rel="noopener" title="코로리방탈출">
+        <img src="https://www.google.com/s2/favicons?domain=colory.dev&sz=64" alt="" onerror="this.remove()">코로리방탈출
+      </a>
+    </div>
+    <aside class="log">
+      <header>
+        <h2>🔐 플레이 기록</h2>
+        <small>항목을 누르면 상세 정보</small>
+      </header>
+      <div class="tools">
+        <input id="q" placeholder="테마 · 매장 · 지역 검색" aria-label="검색">
+        <div class="filters" id="filters">
+          <button type="button" data-f="all" class="on">전체</button>
+          <button type="button" data-f="clear">탈출</button>
+          <button type="button" data-f="fail">실패</button>
+          <button type="button" data-f="life">인생테마</button>
+        </div>
+      </div>
+      <div class="log-list" id="logList"></div>
+    </aside>
+  </div>
+</section>
+
+<!-- ───────── TOP 5 ───────── -->
+<section class="tops collapsed" id="tops">
+  <div class="top-col" id="top-general"></div>
+  <div class="top-col horror" id="top-horror"></div>
+  <button class="top-toggle" type="button" id="topToggle">TOP 5 전체 펼치기 ▼</button>
+</section>
+
+<!-- ───────── 구분선 ───────── -->
+<div class="divider" aria-hidden="true">
+  <div class="tape"><span>KEEP OUT</span><span>방탈출 체험</span><span>출입 주의</span><span>KEEP OUT</span><span>방탈출 체험</span><span>출입 주의</span><span>KEEP OUT</span></div>
+</div>
+<div class="part-head">
+  <div class="eyebrow">PART 02 · ESCAPE GAME</div>
+  <h2>직접 만든 방탈출 체험</h2>
+  <p>제가 다녀온 방탈출에서 영감을 받아 직접 만든 테마입니다.<br>개밤티지만 재밌게 플레이해 주세요!</p>
+</div>
+
+<!-- ───────── 메인: 퀴즈 ───────── -->
+<main>
+  <div class="room">
+    <div class="hud">
+      <div class="stage" id="stageLabel">ENTRANCE</div>
+      <div class="progress" id="progress"></div>
+      <div class="timer" id="timer">60:00</div>
+    </div>
+    <div class="screen" id="screen"></div>
+  </div>
+  <div class="next-theme" aria-label="THEME 02 제작중">
+    <div class="nt-lock">
+      <svg viewBox="0 0 120 140" width="76" height="88" aria-hidden="true">
+        <path d="M30 62 V42 a30 30 0 0 1 60 0 V62" fill="none" stroke="#8a7a5a" stroke-width="12" stroke-linecap="round"/>
+        <rect x="14" y="58" width="92" height="74" rx="12" fill="url(#ntb)" stroke="#3a2a10" stroke-width="3"/>
+        <circle cx="60" cy="88" r="10" fill="#2a1d08"/><rect x="56" y="92" width="8" height="22" rx="3" fill="#2a1d08"/>
+        <defs><linearGradient id="ntb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9a04a"/><stop offset="1" stop-color="#6b4c17"/></linearGradient></defs>
+      </svg>
+    </div>
+    <div class="nt-text">
+      <div class="eyebrow2">THEME 02</div>
+      <h3>제작중...</h3>
+      <p>다음 이야기는 아직 잠겨 있습니다.</p>
+    </div>
+    <div class="nt-chain"></div>
+  </div>
+</main>
+
+<footer>
+  <button class="totop" type="button" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })" aria-label="맨 위로">▲<span>TOP</span></button>
+  <div class="foot-line">전주대학교 <i>|</i> 인공지능학과 <i>|</i> 202292022 <i>|</i> 문강빈 <i>|</i> 나의 방탈일지</div>
+  <div class="foot-sub">🔐 <span id="footCount">107</span>방째 탈출 중 · 오늘도 문은 잠겨 있습니다</div>
+  <div class="foot-copy">© 2026 Mun Gangbin · Made with HTML / CSS / JS</div>
+</footer>
+
+<script>
+/* ════════════════════════════════════════════════
+   ⓪ 포스터 넣는 법 (둘 중 편한 방법)
+   A. 이미지 파일: 이 html 옆에 posters 폴더를 만들고
+      순번으로 이름 변경 → posters/97.jpg 또는 97.png (피안화가 #97)
+      jpg / png / jpeg / webp 모두 자동 인식
+   B. 이미지 주소: 빠른방탈출/코로리에서 포스터 우클릭 →
+      "이미지 주소 복사" 후 아래에 순번: "주소" 로 추가
+   포스터가 없으면 자동으로 숨겨집니다.
+   ════════════════════════════════════════════════ */
+const posters = {
+  // 97: "https://여기에-이미지-주소.jpg",
+};
+
+/* ════════════════════════════════════════════════
+   ① 방탈출 기록 데이터 (엑셀 「방탈출 리스트」 시트에서 변환)
+   - 한 줄 = 테마 하나, people(동행)은 인원수만
+   - 새 기록은 같은 형식으로 맨 아래에 한 줄 추가하세요
+   ════════════════════════════════════════════════ */
+/* ⓑ TOP 5 (기록 번호로 지정) */
+const top5 = {
+  general: { title: "일반 테마 TOP 5", nos: [83, 80, 104, 81, 101] },
+  horror:  { title: "공포 테마 TOP 5", nos: [97, 92, 60, 70, 48] }
+};
+
+const records = [
+  {"no": 1, "open": "16.04.01", "date": "17.??.??", "region": "전주", "store": "큐브이스케이프 전주점", "theme": "집착", "left": "진행률 ??? (60분)", "rate": "풀꽃길", "after100": "풀길", "avg": "★4.8 / 👍46%", "people": 4, "clear": "실패(결말 X)", "revisit": "X"},
+  {"no": 2, "open": "18.07.01", "date": "18.12.??", "region": "전주", "store": "키이스케이프 전주점", "theme": "산장 : 사라진 목격자", "left": "03:17 left (60분)", "rate": "꽃길", "after100": "풀꽃길", "avg": "★8.7 / 👍78%", "people": 4, "clear": "Clear", "revisit": "재방"},
+  {"no": 3, "open": "16.04.01", "date": "21.09.14", "region": "전주", "store": "큐브이스케이프 전주점", "theme": "헨젤과 그레텔", "left": "05:46 left (60분)", "rate": "흙길", "after100": "흙길", "avg": "★4.8 / 👍39%", "people": 4, "clear": "Clear", "revisit": "X"},
+  {"no": 4, "open": "18.07.01", "date": "21.10.06", "region": "전주", "store": "키이스케이프 전주점", "theme": "월야애담", "left": "00:11 left (60분)", "rate": "꽃길", "after100": "풀꽃길", "avg": "★9.3 / 👍87%", "people": 4, "clear": "Clear", "revisit": "X"},
+  {"no": 5, "open": "17.11.01", "date": "21.12.07", "region": "전주", "store": "셜록홈즈 전주점", "theme": "도둑들", "left": "11:12 left (60분)", "rate": "풀길", "after100": "풀길", "avg": "★2.8 / 👍36%", "people": 4, "clear": "Clear", "revisit": "X"},
+  {"no": 6, "open": "18.07.01", "date": "22.04.20", "region": "전주", "store": "키이스케이프 전주점", "theme": "혜화잡화점", "left": "진행률 55% (60분)", "rate": "풀꽃길", "after100": "???", "avg": "★8.7 / 👍79%", "people": 2, "clear": "실패(결말 X)", "revisit": "X"},
+  {"no": 7, "open": "18.07.01", "date": "22.05.20", "region": "전주", "store": "키이스케이프 전주점", "theme": "난쟁이의 장난", "left": "13:44 left (60분)", "rate": "풀꽃길", "after100": "풀꽃길", "avg": "폐업 / 👍60%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 8, "open": "17.11.01", "date": "22.07.31", "region": "전주", "store": "셜록홈즈 전주점", "theme": "마법사의 세계", "left": "06:20 left (60분)", "rate": "풀길", "after100": "풀길", "avg": "★2.9 / 👍38%", "people": 4, "clear": "Clear", "revisit": "X"},
+  {"no": 9, "open": "17.07.01", "date": "22.08.06", "region": "전주", "store": "큐브이스케이프 전주점", "theme": "좀비스쿨", "left": "01:46 left (60분)", "rate": "풀길", "after100": "흙길", "avg": "★3.6 / 👍40%", "people": 3, "clear": "Clear", "revisit": "X"},
+  {"no": 10, "open": "16.04.01", "date": "22.08.10", "region": "전주", "store": "큐브이스케이프 전주점", "theme": "Deliver (딜리버)", "left": "03:55 left (60분)", "rate": "풀길", "after100": "흙길", "avg": "★5.0 / 👍45%", "people": 4, "clear": "Clear", "revisit": "X"},
+  {"no": 11, "open": "17.12.01", "date": "22.09.18", "region": "전주", "store": "머더파커 전주 3호점", "theme": "전당포의 불편한 거래", "left": "진행률 ??? (60분)", "rate": "풀꽃길", "after100": "풀꽃길", "avg": "★7.9 / 👍69%", "people": 4, "clear": "실패(결말 X)", "revisit": "X"},
+  {"no": 12, "open": "17.11.01", "date": "23.01.26", "region": "전주", "store": "머더파커 전주 3호점", "theme": "박마담의 비밀클럽", "left": "진행률 ??? (60분)", "rate": "풀꽃길", "after100": "풀꽃길", "avg": "★8.0 / 👍69%", "people": 3, "clear": "실패(결말 X)", "revisit": "X"},
+  {"no": 13, "open": "17.11.01", "date": "23.01.27", "region": "전주", "store": "머더파커 전주 3호점", "theme": "박엠마 엄마의 향기", "left": "진행률 ??? (60분)", "rate": "풀꽃길", "after100": "풀꽃길", "avg": "★7.7 / 👍66%", "people": 3, "clear": "실패(결말 X)", "revisit": "X"},
+  {"no": 14, "open": "17.01.01", "date": "23.01.30", "region": "전주", "store": "원타임 전주신시가지점", "theme": "반 고흐의 방", "left": "06:35 left (60분)", "rate": "풀길", "after100": "풀길", "avg": "★5.5 / 👍47%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 15, "open": "17.01.01", "date": "23.01.30", "region": "전주", "store": "원타임 전주신시가지점", "theme": "스토커", "left": "02:32 left (60분)", "rate": "풀길", "after100": "풀길", "avg": "★5.0 / 👍50%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 16, "open": "22.03.01", "date": "23.04.20", "region": "전주", "store": "비밀의화원 전주점", "theme": "달 : 기억의조각", "left": "01:50 left (75분)", "rate": "꽃길", "after100": "풀꽃길", "avg": "★7.6 / 👍72%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 17, "open": "18.05.01", "date": "23.05.13", "region": "대전", "store": "룸즈에이 대전은행점", "theme": "기억술사", "left": "06:43 left (60분)", "rate": "풀길", "after100": "풀길", "avg": "★5.8 / 👍53%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 18, "open": "19.06.01", "date": "23.05.13", "region": "대전", "store": "마스터키 은행직영점", "theme": "1990", "left": "06:00 left (60분)", "rate": "풀꽃길", "after100": "풀길", "avg": "★7.2 / 👍60%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 19, "open": "16.06.01", "date": "23.07.24", "region": "부산", "store": "브레이크아웃 해운대점", "theme": "오스왈드 지상 최대의 쇼", "left": "03:55 left (60분)", "rate": "풀꽃길", "after100": "풀길", "avg": "★5.2 / 👍57%", "people": 4, "clear": "Clear", "revisit": "X"},
+  {"no": 20, "open": "20.12.01", "date": "23.07.26", "region": "전주", "store": "머더파커 전주 2호점", "theme": "목격자들", "left": "00:17 left (70분)", "rate": "풀꽃길", "after100": "풀꽃길", "avg": "★8.6 / 👍75%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 21, "open": "22.09.01", "date": "23.09.12", "region": "대전", "store": "도어이스케이프 NC 대전유성점", "theme": "산타의 민족", "left": "10:17 left (60분)", "rate": "풀꽃길", "after100": "풀꽃길", "avg": "★7.8 / 👍71%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 22, "open": "19.06.01", "date": "23.09.17", "region": "대전", "store": "마스터키 대전은행점", "theme": "편지", "left": "07:46 left (60분)", "rate": "풀길", "after100": "풀길", "avg": "★7.4 / 👍66%", "people": 3, "clear": "Clear", "revisit": "X"},
+  {"no": 23, "open": "19.03.01", "date": "23.09.24", "region": "전주", "store": "디코드 전주객사점", "theme": "지하감옥", "left": "09:11 left (60분)", "rate": "풀길", "after100": "흙길", "avg": "★3.4 / 👍48%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 24, "open": "20.08.01", "date": "23.11.06", "region": "강남", "store": "제로월드 강남점", "theme": "나비효과", "left": "03:15 left (75분)", "rate": "꽃길", "after100": "풀꽃길", "avg": "★8.0 / 👍72%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 25, "open": "22.04.01", "date": "23.11.07", "region": "전주", "store": "비밀의화원 전주점", "theme": "담력학원", "left": "00:17 left (75분)", "rate": "인생테마", "after100": "꽃길", "avg": "★9.0 / 👍83%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 26, "open": "20.09.01", "date": "23.11.08", "region": "광주", "store": "러시아워 방탈출카페", "theme": "하루끝", "left": "00:08 left (70분)", "rate": "꽃길", "after100": "꽃길", "avg": "★9.1 / 👍83%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 27, "open": "18.05.01", "date": "23.11.18", "region": "대전", "store": "룸즈에이 대전은행점", "theme": "안개꽃", "left": "06:40 left (60분)", "rate": "풀길", "after100": "풀길", "avg": "★6.2 / 👍60%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 28, "open": "19.10.01", "date": "23.11.18", "region": "대전", "store": "마스터키 대전은행점", "theme": "그레이트 월", "left": "20:48 left (60분)", "rate": "풀꽃길", "after100": "풀꽃길", "avg": "★7.1 / 👍61%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 29, "open": "18.05.01", "date": "23.12.16", "region": "대전", "store": "룸즈에이 대전은행점", "theme": "히어로 아카데미", "left": "03:47 left (60분)", "rate": "풀길", "after100": "풀길", "avg": "★6.6 / 👍64%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 30, "open": "22.03.01", "date": "24.02.28", "region": "전주", "store": "비밀의화원 전주점", "theme": "사춘기", "left": "02:18 left (60분)", "rate": "풀꽃길", "after100": "풀꽃길", "avg": "★6.6 / 👍57%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 31, "open": "22.09.01", "date": "24.04.13", "region": "대전", "store": "도어이스케이프 NC 대전유성점", "theme": "GOODNIGHT", "left": "20:47 left (60분)", "rate": "풀꽃길", "after100": "풀꽃길", "avg": "★7.6 / 👍68%", "people": 3, "clear": "Clear", "revisit": "X"},
+  {"no": 32, "open": "21.04.01", "date": "24.04.16", "region": "강남", "store": "제로월드 강남점", "theme": "포레스트", "left": "00:58 left (75분)", "rate": "꽃밭길", "after100": "꽃길", "avg": "★9.3 / 👍91%", "people": 4, "clear": "Clear", "revisit": "X"},
+  {"no": 33, "open": "24.03.19", "date": "24.05.19", "region": "강남", "store": "비트포비아 던전스텔라", "theme": "향", "left": "00:17 left (70분)", "rate": "꽃밭길", "after100": "꽃밭길", "avg": "★9.6 / 👍93%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 34, "open": "22.07.01", "date": "24.05.20", "region": "전주", "store": "머더파커 전주2호점", "theme": "스모커", "left": "03:45 left (90분)", "rate": "풀길", "after100": "풀꽃길", "avg": "★8.7 / 👍81%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 35, "open": "23.12.10", "date": "24.07.14", "region": "수원", "store": "상상의문 수원점", "theme": "혼숨", "left": "진행률 77% (70분)", "rate": "꽃길", "after100": "꽃길", "avg": "★8.9 / 👍85%", "people": 2, "clear": "실패(결말 X)", "revisit": "재방"},
+  {"no": 36, "open": "22.05.01", "date": "24.07.15", "region": "수원", "store": "소우주 수원점", "theme": "방과후 추리반 EP.1 - 여고생 살인사건", "left": "08:36 left (70분)", "rate": "꽃길", "after100": "꽃길", "avg": "★9.0 / 👍84%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 37, "open": "21.05.01", "date": "24.08.16", "region": "강남", "store": "황금열쇠 강남스퀘어점", "theme": "노몬 (Nomon)", "left": "진행률 97% (80분)", "rate": "꽃길", "after100": "꽃길", "avg": "★8.9 / 👍84%", "people": 2, "clear": "실패(결말 O)", "revisit": "X"},
+  {"no": 38, "open": "22.05.01", "date": "24.08.16", "region": "강남", "store": "에피소드 방탈출", "theme": "귀문기담", "left": "진행률 92% (75분)", "rate": "풀꽃길", "after100": "풀꽃길", "avg": "★8.3 / 👍80%", "people": 2, "clear": "실패(결말 X)", "revisit": "X"},
+  {"no": 39, "open": "23.05.01", "date": "24.08.16", "region": "강남", "store": "키이스케이프 로그인 2호점", "theme": "Back to the Scene + (백투더씬)", "left": "01:39 left (65분)", "rate": "꽃길", "after100": "꽃길", "avg": "★9.6 / 👍93%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 40, "open": "17.09.01", "date": "24.08.24", "region": "전주", "store": "마스터키 전주고사점", "theme": "13여고괴담", "left": "01:28 left (60분)", "rate": "풀꽃길", "after100": "풀꽃길", "avg": "★7.3 / 👍64%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 41, "open": "23.08.14", "date": "24.11.05", "region": "홍대", "store": "지구별 방탈출 홍대라스트시티점", "theme": "纹身 (문신)", "left": "01:07 left (67분)", "rate": "꽃길", "after100": "꽃길", "avg": "★9.5 / 👍93%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 42, "open": "22.07.01", "date": "24.11.06", "region": "신촌", "store": "마스터키 프라임 신촌퍼블릭점", "theme": "SCENE : 404 NOT FOUND", "left": "진행률 97% (70분)", "rate": "인생테마", "after100": "꽃길", "avg": "★8.7 / 👍84%", "people": 2, "clear": "실패(결말 O)", "revisit": "X"},
+  {"no": 43, "open": "17.04.01", "date": "24.11.18", "region": "건대", "store": "솔버 건대 1호점", "theme": "루시드 드림", "left": "09:43 left (60분)", "rate": "풀꽃길", "after100": "풀꽃길", "avg": "★8.5 / 👍80%", "people": 3, "clear": "Clear", "revisit": "X"},
+  {"no": 44, "open": "21.12.01", "date": "24.11.18", "region": "건대", "store": "황금열쇠 건대점", "theme": "플래시", "left": "10:31 left (70분)", "rate": "꽃길", "after100": "꽃길", "avg": "★9.5 / 👍93%", "people": 3, "clear": "Clear", "revisit": "X"},
+  {"no": 45, "open": "22.11.01", "date": "24.11.19", "region": "건대", "store": "황금열쇠 건대점", "theme": "나우히어 (Now here)", "left": "진행률 97% (70분)", "rate": "인생테마", "after100": "꽃밭길", "avg": "★9.5 / 👍92%", "people": 3, "clear": "실패(결말 O)", "revisit": "X"},
+  {"no": 46, "open": "24.01.22", "date": "24.11.19", "region": "신촌", "store": "이스케이프시티 그랜드시티신촌점", "theme": "컨티뉴얼", "left": "12:24 left (70분)", "rate": "꽃길", "after100": "풀꽃길", "avg": "★9.2 / 👍87%", "people": 3, "clear": "Clear", "revisit": "X"},
+  {"no": 47, "open": "22.07.01", "date": "24.11.29", "region": "홍대", "store": "비트포비아 홍대 던전3", "theme": "그 달동네", "left": "07:23 left (70분)", "rate": "풀꽃길", "after100": "풀꽃길", "avg": "★9.2 / 👍88%", "people": 3, "clear": "Clear", "revisit": "X"},
+  {"no": 48, "open": "23.02.01", "date": "24.11.29", "region": "홍대", "store": "룸엘이스케이프 홍대 1호점", "theme": "퇴근길", "left": "08:10 left (75분)", "rate": "꽃길", "after100": "꽃길", "avg": "★9.0 / 👍90%", "people": 3, "clear": "Clear", "revisit": "X"},
+  {"no": 49, "open": "20.11.01", "date": "24.11.30", "region": "강남", "store": "제로월드 강남점", "theme": "링", "left": "진행률 88% (75분)", "rate": "인생테마", "after100": "꽃길", "avg": "★9.4 / 👍91%", "people": 3, "clear": "실패(결말 X)", "revisit": "X"},
+  {"no": 50, "open": "24.03.13", "date": "24.12.29", "region": "전주", "store": "상상락원 전주본점", "theme": "Table ver.3", "left": "10:07 left (60분)", "rate": "꽃길", "after100": "풀꽃길", "avg": "폐업 / 👍85%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 51, "open": "24.03.13", "date": "24.12.29", "region": "전주", "store": "상상락원 전주본점", "theme": "Table ver.1", "left": "01:14 left (60분)", "rate": "꽃길", "after100": "꽃길", "avg": "폐업 / 👍88%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 52, "open": "24.03.13", "date": "24.12.29", "region": "전주", "store": "상상락원 전주본점", "theme": "Table ver.2", "left": "22:53 left (60분)", "rate": "꽃길", "after100": "풀꽃길", "avg": "폐업 / 👍88%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 53, "open": "23.05.01", "date": "24.12.30", "region": "홍대", "store": "해피앤딩", "theme": "H.B.D 해피버스데이", "left": "진행률 85% (60분)", "rate": "풀꽃길", "after100": "풀꽃길", "avg": "★8.4 / 👍78%", "people": 2, "clear": "실패(결말 X)", "revisit": "X"},
+  {"no": 54, "open": "24.11.25", "date": "24.12.30", "region": "홍대", "store": "쇼룸404", "theme": "블랙홀", "left": "00:00 left (60분)", "rate": "꽃길", "after100": "풀꽃길", "avg": "★9.0 / 👍86%", "people": 2, "clear": "실패(결말 O)", "revisit": "X"},
+  {"no": 55, "open": "21.12.01", "date": "24.12.31", "region": "홍대", "store": "이룸에이트", "theme": "고령화사회", "left": "00:00 left (60분)", "rate": "꽃길", "after100": "풀꽃길", "avg": "★8.9 / 👍82%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 56, "open": "24.03.13", "date": "25.01.08", "region": "전주", "store": "상상락원 전주본점", "theme": "Table ver.5", "left": "23:34 left (60분)", "rate": "꽃길", "after100": "풀꽃길", "avg": "폐업 / 👍86%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 57, "open": "24.03.13", "date": "25.01.08", "region": "전주", "store": "상상락원 전주본점", "theme": "Table ver.4 (협동)", "left": "26:35 left (60분)", "rate": "꽃길", "after100": "꽃길", "avg": "폐업 / 👍85%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 58, "open": "24.03.13", "date": "25.01.08", "region": "전주", "store": "상상락원 전주본점", "theme": "Table ver.4 (경쟁)", "left": "16:29 left (60분)", "rate": "꽃길", "after100": "풀꽃길", "avg": "폐업 / 👍88%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 59, "open": "23.03.01", "date": "25.01.09", "region": "홍대", "store": "지구별 방탈출 홍대라스트시티점", "theme": "섀도우", "left": "00:11 left (75분)", "rate": "꽃길", "after100": "꽃길", "avg": "★9.5 / 👍93%", "people": 3, "clear": "Clear", "revisit": "X"},
+  {"no": 60, "open": "24.04.09", "date": "25.01.09", "region": "홍대", "store": "제로월드 홍대점", "theme": "층간소음", "left": "02:46 left (65분)", "rate": "인생테마", "after100": "인생테마", "avg": "★9.7 / 👍96%", "people": 3, "clear": "Clear", "revisit": "X"},
+  {"no": 61, "open": "24.04.23", "date": "25.01.10", "region": "홍대", "store": "오아시스 뮤지엄", "theme": "배드타임", "left": "10:00 left (75분)", "rate": "인생테마", "after100": "인생테마", "avg": "★9.6 / 👍86%", "people": 3, "clear": "Clear", "revisit": "X"},
+  {"no": 62, "open": "16.03.01", "date": "25.01.22", "region": "전주", "store": "머더파커 전주 1호점", "theme": "머더파커 분노의 살인", "left": "07:02 left (60분)", "rate": "풀꽃길", "after100": "풀꽃길", "avg": "★8.4 / 👍87%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 63, "open": "18.06.01", "date": "25.01.22", "region": "전주", "store": "머더파커 전주 1호점", "theme": "내 이름 지배만", "left": "04:42 left (60분)", "rate": "풀꽃길", "after100": "풀꽃길", "avg": "★8.5 / 👍88%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 64, "open": "???", "date": "25.05.08", "region": "전주", "store": "상상락원 전주객사점", "theme": "Table ver.26", "left": "11:33 left (60분)", "rate": "꽃길", "after100": "풀꽃길", "avg": "★8.8 / 👍89%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 65, "open": "???", "date": "25.05.08", "region": "전주", "store": "상상락원 전주객사점", "theme": "Table ver.27", "left": "03:44 left (60분)", "rate": "꽃길", "after100": "풀꽃길", "avg": "★9.0 / 👍90%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 66, "open": "???", "date": "25.06.21", "region": "말레이시아", "store": "BangHistory", "theme": "Cecel Hotel", "left": "22:30 left (90분)", "rate": "풀꽃길", "after100": "풀꽃길", "avg": "★?.? / 👍??%", "people": 4, "clear": "Clear", "revisit": "X"},
+  {"no": 67, "open": "???", "date": "25.07.05", "region": "말레이시아", "store": "Escapee", "theme": "UPSIDEDOWN", "left": "진행률 ??% (60분)", "rate": "풀길", "after100": "풀길", "avg": "★?.? / 👍??%", "people": 3, "clear": "실패(결말 X)", "revisit": "X"},
+  {"no": 68, "open": "20.05.01", "date": "25.07.28", "region": "수원", "store": "리멤버 방탈출 수원점", "theme": "리멤버", "left": "15:42 left (60분)", "rate": "풀꽃길", "after100": "풀길", "avg": "★8.3 / 👍93%", "people": 3, "clear": "Clear", "revisit": "X"},
+  {"no": 69, "open": "25.07.16", "date": "25.07.28", "region": "수원", "store": "상상의문 수원 2호점", "theme": "낙화", "left": "01:04 left (80분)", "rate": "꽃밭길", "after100": "꽃길", "avg": "★9.3 / 👍94%", "people": 3, "clear": "Clear", "revisit": "X"},
+  {"no": 70, "open": "25.05.26", "date": "25.07.28", "region": "수원", "store": "상상의문 수원 2호점", "theme": "성지기숙학원 : 특수교정반", "left": "진행률 95% (80분)", "rate": "인생테마", "after100": "꽃밭길", "avg": "★9.6 / 👍95%", "people": 3, "clear": "실패(결말 O)", "revisit": "X"},
+  {"no": 71, "open": "24.02.12", "date": "25.07.28", "region": "수원", "store": "상상의문 수원 1호점", "theme": "영안실", "left": "진행률 60% (80분)", "rate": "꽃길", "after100": "???", "avg": "★8.6 / 👍96%", "people": 3, "clear": "실패(결말 X)", "revisit": "X"},
+  {"no": 72, "open": "23.11.16", "date": "25.07.29", "region": "수원", "store": "상상의문 수원1호점", "theme": "복도끝", "left": "05:10 left (75분)", "rate": "꽃밭길", "after100": "꽃길", "avg": "★9.0 / 👍97%", "people": 3, "clear": "Clear", "revisit": "X"},
+  {"no": 73, "open": "24.08.01", "date": "25.08.07", "region": "강남", "store": "키이스케이프 강남 스테이션점", "theme": "내 방", "left": "01:40 left (65분)", "rate": "꽃길", "after100": "꽃길", "avg": "★9.7 / 👍98%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 74, "open": "24.12.01", "date": "25.08.07", "region": "강남", "store": "키이스케이프 강남 스테이션점", "theme": "노스탤지아 비스타", "left": "00:00 left (65분)", "rate": "인생테마", "after100": "꽃밭길", "avg": "★9.5 / 👍99%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 75, "open": "22.06.01", "date": "25.09.04", "region": "강남", "store": "단편선 강남점", "theme": "그림자 없는 상자", "left": "03:49 left (75분)", "rate": "꽃밭길", "after100": "꽃길", "avg": "★9.7 / 👍94%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 76, "open": "25.05.08", "date": "25.09.04", "region": "강남", "store": "오늘의 한페이지", "theme": "용하다 용해!! 용팔도령", "left": "??:?? left (90분)", "rate": "꽃밭길", "after100": "꽃밭길", "avg": "★9.6 / 👍94%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 77, "open": "22.10.01", "date": "25.10.02", "region": "강남", "store": "키이스케이프 메모리컴퍼니점", "theme": "필름 바이 에디", "left": "진행률 90% (75분)", "rate": "꽃밭길", "after100": "꽃밭길", "avg": "★9.8 / 👍96%", "people": 2, "clear": "실패(결말 X)", "revisit": "X"},
+  {"no": 78, "open": "22.02.01", "date": "25.10.02", "region": "강남", "store": "단편선 강남점", "theme": "사람들은 그것을 행복이라 부르기로 했다", "left": "00:00 left (80분)", "rate": "꽃길", "after100": "꽃길", "avg": "★9.5 / 👍93%", "people": 2, "clear": "실패(결말 O)", "revisit": "X"},
+  {"no": 79, "open": "25.09.28", "date": "25.10.25", "region": "대전", "store": "이스케이퍼스 대전둔산점", "theme": "The Invitation", "left": "10:00 left (60분)", "rate": "풀꽃길", "after100": "풀꽃길", "avg": "★8.8 / 👍82%", "people": 3, "clear": "Clear", "revisit": "X"},
+  {"no": 80, "open": "23.08.17", "date": "25.11.06", "region": "강남", "store": "키이스케이프 메모리컴퍼니점", "theme": "필름 바이 밥", "left": "03:43 left (80분)", "rate": "인생테마", "after100": "인생테마", "avg": "★9.9 / 👍97%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 81, "open": "23.11.24", "date": "25.11.06", "region": "홍대", "store": "키이스케이프 로그인 1호점", "theme": "FOR FREE", "left": "00:00 left (65분)", "rate": "인생테마", "after100": "꽃밭길", "avg": "★9.7 / 👍96%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 82, "open": "25.10.27", "date": "25.11.27", "region": "강남", "store": "더 챕터", "theme": "쿠키", "left": "00:00 left (70분)", "rate": "꽃길", "after100": "꽃길", "avg": "★9.7 / 👍95%", "people": 2, "clear": "실패(결말 O)", "revisit": "X"},
+  {"no": 83, "open": "23.01.01", "date": "25.11.27", "region": "강남", "store": "키이스케이프 메모리컴퍼니점", "theme": "필름 바이 스티브", "left": "00:00 left (80분)", "rate": "인생테마", "after100": "인생테마", "avg": "★9.8 / 👍97%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 84, "open": "???", "date": "26.02.07", "region": "대전", "store": "셜록홈즈 대전은행점", "theme": "리버스 1부 - 결과", "left": "진행률 81% (60분)", "rate": "풀꽃길", "after100": "풀꽃길", "avg": "★8.4 / 👍79%", "people": 2, "clear": "실패(결말 X)", "revisit": "X"},
+  {"no": 85, "open": "25.04.01", "date": "26.03.07", "region": "광주", "store": "러시아워 시네마틱", "theme": "악녀 : 은화기숙학원", "left": "00:00 left (80분)", "rate": "꽃밭길", "after100": "꽃길", "avg": "★9.6 / 👍93%", "people": 3, "clear": "Clear", "revisit": "X"},
+  {"no": 86, "open": "22.07.01", "date": "26.04.08", "region": "홍대", "store": "포인트나인 홍대점", "theme": "사일런트", "left": "00:00 left (75분)", "rate": "꽃길", "after100": "꽃길", "avg": "★9.5 / 👍94%", "people": 2, "clear": "실패(결말 O)", "revisit": "X"},
+  {"no": 87, "open": "22.12.01", "date": "26.04.08", "region": "홍대", "store": "포인트나인 홍대점", "theme": "리슨", "left": "04:35 left (75분)", "rate": "꽃밭길", "after100": "꽃길", "avg": "★9.4 / 👍92%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 88, "open": "25.07.17", "date": "26.05.23", "region": "전주", "store": "상상락원 전주한옥마을점", "theme": "Table ver.37 킬러", "left": "00:00 left (60분)", "rate": "꽃길", "after100": "풀꽃길", "avg": "★9.1 / 👍85%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 89, "open": "25.07.17", "date": "26.05.23", "region": "전주", "store": "상상락원 전주한옥마을점", "theme": "Table ver.36 협동", "left": "03:55 left (60분)", "rate": "꽃길", "after100": "풀꽃길", "avg": "★9.2 / 👍85%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 90, "open": "25.07.17", "date": "26.05.29", "region": "전주", "store": "상상락원 전주한옥마을점", "theme": "Table ver.41 우주", "left": "01:10 left (60분)", "rate": "꽃길", "after100": "풀꽃길", "avg": "★9.1 / 👍84%", "people": 3, "clear": "Clear", "revisit": "X"},
+  {"no": 91, "open": "25.07.17", "date": "26.05.29", "region": "전주", "store": "상상락원 전주한옥마을점", "theme": "Table ver.40 학교", "left": "03:25 left (60분)", "rate": "꽃길", "after100": "풀길", "avg": "★9.1 / 👍85%", "people": 3, "clear": "Clear", "revisit": "X"},
+  {"no": 92, "open": "26.02.09", "date": "26.06.17", "region": "대전", "store": "플레이33 대전점", "theme": "강천여자고등학교", "left": "14:35 left (60분)", "rate": "인생테마", "after100": "인생테마", "avg": "★9.6 / 👍94%", "people": 3, "clear": "Clear", "revisit": "X"},
+  {"no": 93, "open": "23.03.01", "date": "26.08.01", "region": "대전", "store": "룸즈에이 대전둔산점", "theme": "귀빈", "left": "진행률 75% (60분)", "rate": "풀꽃길", "after100": "풀꽃길", "avg": "★8.7 / 👍81%", "people": 2, "clear": "실패(결말 X)", "revisit": "X"},
+  {"no": 94, "open": "25.12.12", "date": "26.08.01", "region": "대전", "store": "이스케이퍼스 대전둔산점", "theme": "야간당직", "left": "14:35 left (70분)", "rate": "꽃길", "after100": "풀꽃길", "avg": "★8.8 / 👍84%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 95, "open": "25.11.29", "date": "26.08.10", "region": "건대", "store": "플레이33 건대점", "theme": "다이얼", "left": "진행률 90% (60분)", "rate": "꽃길", "after100": "꽃길", "avg": "★9.7 / 👍95%", "people": 2, "clear": "실패(결말 X)", "revisit": "X"},
+  {"no": 96, "open": "26.03.18", "date": "26.08.10", "region": "건대", "store": "플레이33 건대점", "theme": "그 날", "left": "03:47 left (60분)", "rate": "꽃밭길", "after100": "꽃밭길", "avg": "★9.7 / 👍94%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 97, "open": "26.03.28", "date": "26.08.10", "region": "홍대", "store": "플레이 33 홍대점", "theme": "피안화", "left": "08:57 left (70분)", "rate": "인생테마", "after100": "인생테마", "avg": "★9.8 / 👍96%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 98, "open": "23.11.19", "date": "26.09.11", "region": "건대", "store": "드림이스케이프 건대점", "theme": "바야흐로, 여름이었다", "left": "00:00 left (80분)", "rate": "꽃밭길", "after100": "꽃밭길", "avg": "★9.8 / 👍97%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 99, "open": "23.04.01", "date": "26.09.11", "region": "강남", "store": "키이스케이프 로그인 1호점", "theme": "머니머니패키지", "left": "00:00 left (65분)", "rate": "꽃밭길", "after100": "꽃길", "avg": "★9.7 / 👍96%", "people": 2, "clear": "실패(결말 O)", "revisit": "X"},
+  {"no": 100, "open": "20.11.01", "date": "26.09.11", "region": "강남", "store": "비트포비아 강남 던전2", "theme": "메이데이", "left": "00:50 left (65분)", "rate": "꽃길", "after100": "꽃길", "avg": "★9.4 / 👍90%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 101, "open": "24.06.06", "date": "26.09.11", "region": "강남", "store": "키이스케이프 스테이션", "theme": "머니머니부동산", "left": "00:00 left (80분)", "rate": "꽃밭길", "after100": "꽃밭길", "avg": "★9.8 / 👍96%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 102, "open": "25.04.30", "date": "26.10.07", "region": "홍대", "store": "지구별 방탈출 홍대라스트시티점", "theme": "카부트", "left": "03:08 left (65분)", "rate": "꽃길", "after100": "꽃길", "avg": "★9.6 / 👍93%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 103, "open": "26.03.24", "date": "26.10.07", "region": "홍대", "store": "채널27 버터플라이점", "theme": "붐붐박사의 폭죽놀이 유토피아", "left": "02:22 left (80분)", "rate": "꽃밭길", "after100": "꽃밭길", "avg": "★9.7 / 👍95%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 104, "open": "25.11.10", "date": "26.10.07", "region": "홍대", "store": "채널27 버터플라이점", "theme": "사요나라, 세이코!", "left": "01:09 left (80분)", "rate": "꽃밭길", "after100": "꽃밭길", "avg": "★9.7 / 👍95%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 105, "open": "21.05.01", "date": "26.10.07", "region": "홍대", "store": "퀘스천마크 홍대점", "theme": "퀘스천마크", "left": "00:28 left (75분)", "rate": "꽃길", "after100": "꽃길", "avg": "★9.5 / 👍93%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 106, "open": "26.03.18", "date": "26.10.30", "region": "대전", "store": "플레이33 대전점", "theme": "자각몽", "left": "07:53 left (60분)", "rate": "풀꽃길", "after100": "풀꽃길", "avg": "★8.6 / 👍83%", "people": 2, "clear": "Clear", "revisit": "X"},
+  {"no": 107, "open": "26.09.04", "date": "26.10.30", "region": "대전", "store": "플레이33 대전점", "theme": "I am still here, ELLEN", "left": "13:59 left (70분)", "rate": "꽃길", "after100": "꽃길", "avg": "★9.5 / 👍90%", "people": 2, "clear": "Clear", "revisit": "X"}
+];
+
+/* ════════════════════════════════════════════════
+   ② 방탈출 스토리 · 문제 데이터
+   - type : "story"(다음 버튼) / "puzzle"(자물쇠) / "find"(그림에서 클릭할 곳 찾기)
+   - input: "digits" 숫자 · "dir" 방향 · "word" 영단어
+   - image: img 폴더 그림 / overlay: 깜박이는 겹친 그림 / dark: 손전등 모드
+   - spots: 그림 위 클릭 영역 (x, y, w, h 는 % 단위)
+   - timer: 이 방 제한시간(초) / footsteps: 발소리 / limit: 숨기 제한시간
+   - amb: 배경음 drone · creak · wind · eerie · temple · tense
+   - music: sounds 폴더 배경음(반복) / once: 한 번 재생 효과음
+   ════════════════════════════════════════════════ */
+const quiz = {
+  no: "THEME 01",
+  title: "옥귀산장",
+  credit: "이 스토리는 저의 35번째 방탈출,\n상상의문 수원1호점의 「혼숨」 테마에 모티브를 받아 제작되었습니다.",
+  premise: "전주대학교 괴담동아리 \"쭈괴\"에 새로 가입하게 된 우리들은\n폐가로 유명한 옥귀산장으로 공포체험을 가게 되었다..",
+  poster: "poster.jpg",
+  timeLimitMin: 30,
+  scenes: [
+    { type: "story", title: "옥귀산장", image: "map.jpg", amb: "drone", walk: true,
+      story: "5일 전, 선배들이 조사하러 갔다가 무언가를 보고 내려왔다는 산장이 있다.\n지도에는 별점 1.0, '영업 중단'으로만 남아 있는 곳. 옥귀산장.\n우리는 그 소문을 확인하러 산을 올랐다." },
+
+    { type: "puzzle", title: "대문", input: "digits", len: 4,
+      image: "gate.jpg", overlay: { src: "gate-white.png", fx: "flicker" }, fog: true, amb: "drone",
+      story: "산장 입구에 도착했다. 대문은 굳게 잠겨 있고 4자리 자물쇠가 걸려 있다.\n현판 글씨가 어딘가 이상하다.",
+      answer: "7940",
+      hint: "현판을 계속 지켜보세요. 깜박이는 획만 따로 읽으면 숫자가 됩니다." },
+
+    { type: "puzzle", title: "부적이 붙은 방문", input: "digits", len: 4,
+      image: "talisman-room.jpg", dark: true, amb: "creak", music: "bgm",
+      story: "산장 안은 칠흑같이 어둡다.\n손전등을 비추자 부적으로 뒤덮인 방문이 나타났다.\n방문에는 버튼 8개짜리 자물쇠가 달려 있다.. 어떻게 푸는 거지?",
+      tip: "마우스(손가락)를 움직여 손전등을 비춰 보세요",
+      answer: "2358",
+      hint: "오른쪽 수납장과 자물쇠의 칸 모양이 같아요. 부적이 붙은 칸의 번호는?" },
+
+    { type: "puzzle", title: "거실의 오래된 TV", input: "digits", len: 4,
+      image: "living.jpg", amb: "wind", passer: true, music: "bgm",
+      spots: [{ x: 39, y: 77, w: 13, h: 16, label: "수첩", open: ["note1.jpg"] }],
+      story: "방을 지나 큰 거실로 나왔다. 가운데에 오래된 TV가 하나 있다.\n낡은 산장인데 전력이 들어온다고...? TV를 작동시킬 수 있을 것 같다.\nTV 아래에서 괴담동아리 부회장 이명준 선배의 수첩을 발견했다.\n5일 전에 실수로 놓고 가신 걸까?",
+      tip: "그림 속 수첩을 눌러 보세요",
+      answer: "3650",
+      hint: "7칸이 모두 켜진 숫자 8에서 시작하세요. 매번 8로 돌아가서 적힌 칸을 지웁니다." },
+
+    { type: "story", title: "CCTV", image: "cctv.jpg", fx: "tv snuff", amb: "eerie", once: "impact",
+      story: "TV가 켜졌다.\n...방송이 아니라 CCTV였다.\n저게 뭐야!!!!! 현관 카메라에 정체 모를 괴물이 이쪽으로 오고 있다!\n\n빨리 숨어야 해." },
+
+    { type: "find", title: "숨을 곳", image: "living.jpg", sound: "heartbeat", amb: "eerie", limit: 7,
+      spots: [{ x: 74, y: 47, w: 14, h: 32, label: "벽난로", go: true },
+              { x: 11.5, y: 28, w: 17, h: 30, label: "창문", say: "여긴 잠겨 있다.." },
+              { x: 8, y: 71, w: 27, h: 18, label: "소파", say: "여기는 다 보여.." },
+              { x: 38, y: 66, w: 24, h: 14, label: "TV 장", say: "너무 좁아.." },
+              { x: 62.5, y: 62, w: 9, h: 25, label: "흔들의자", say: "여긴 숨을 수 없어.." }],
+      miss: "여기는 숨을 데가 없어..!",
+      failText: "그것과 눈이 마주쳤다.",
+      story: "어디로 숨지? 발소리가 가까워진다.\n7초 안에 숨어야 해!",
+      tip: "숨을 곳을 눌러 보세요" },
+
+    { type: "story", title: "숨어", image: "hide-bg.jpg", fx: "hide", sound: "heartbeat", amb: "eerie",
+      story: "큰일났다.\n오른쪽 벽난로 안으로 몸을 숨겼다. 돌 틈 사이로 거실이 보인다.\n그것이 TV 앞에 서 있다.\n...이쪽을 보고 있다.",
+      after: "후... 이제 갔나?\n이런... 지나온 방문들이 전부 잠겨 버렸다.\n어쩔 수 없이 알 수 없는 옆방으로 이동해야겠다." },
+
+    { type: "puzzle", title: "옆방", input: "digits", len: 3,
+      image: "side-door.jpg", amb: "temple",
+      story: "옆방 문에도 부적이 덕지덕지 붙어 있는데..\n부적들을 자세히 봐 볼까?\n문에는 3자리 자물쇠가 걸려 있다.",
+      answer: "276",
+      hint: "멀리서 보세요. 반듯하게 나란히 붙은 부적들만 이어 보면?" },
+
+    { type: "puzzle", title: "창고", input: "dir",
+      image: "storage.jpg", amb: "temple",
+      spots: [{ x: 66, y: 43, w: 11, h: 14, label: "수첩", open: ["note2.jpg"] }],
+      story: "문을 열자 창고가 나왔다. 절과 신당에서 쓰던 물건들이 가득하다.\n앞에는 시계 5개가 놓여 있는데, 이미 전부 깨지고 부서져 있다.\n시계 아래 서랍에는 방향 자물쇠가 걸려 있다.\n저게 뭐지..?",
+      tip: "제단 위 수첩을 눌러 보세요",
+      answer: ["L", "U", "R", "D", "L"],
+      hint: "시침과 분침이 만드는 꺾쇠(< ∧ > ∨)의 뾰족한 끝이 가리키는 방향이에요." },
+
+    { type: "puzzle", title: "부회장의 폰", input: "word", len: 5,
+      image: "phone.jpg", amb: "temple", sound: "notify",
+      phoneHint: ["hint-panels.jpg", "hint-rule.jpg"],
+      story: "자물쇠를 풀었더니... 뜬금없이 괴담동아리 부회장, 명준이형의 폰이 나왔다.\n괴담동아리 규칙을 어긴 건가...?\n\n이걸로 경찰에 신고할 수 있을 거야. 빨리 이곳을 벗어나야겠어.\n하지만 폰을 켜 보니 암호가 걸려 있다.\n폰에 힌트가 있잖아?",
+      answer: "POINT",
+      hint: "반듯한 공만 이으면 글자가 됩니다. 아래 색깔 점 순서대로 읽으세요." },
+
+    { type: "story", title: "먹통", image: "call.jpg", amb: "eerie",
+      story: "폰을 열고 112에 전화를 걸었다.\n...산속이라 전화가 먹통이다. 헛수고인가.." },
+
+    { type: "puzzle", title: "거실 창문", input: "digits", len: 4,
+      image: "window.jpg", amb: "tense",
+      story: "어쩔 수 없이 거실 창문으로 탈출해야겠다.\n그때, 복도 쪽에서 누군가 걸어오는 발소리가 들린다.\n창문은 판자로 막혀 있고 자물쇠로 잠겨 있다. 그런데 이 창문.. 무언가 이상하다.",
+      answer: "8253",
+      hint: "판자가 아니라 틈을 보세요. 판자가 남긴 모양이 숫자예요. 위 줄부터 읽으세요.",
+      timer: 60, footsteps: true,
+      failText: "발소리가 멈췄다.\n바로 뒤에서." },
+
+    { type: "story", title: "끝", ending: true,
+      story: "창문이 열리고, 정신없이 산을 내려왔다.\n그렇게 우리는 탈출했고, 그 안의 정체 모를 괴물은 알 수가 없었다.\n또한 부회장인 명준 선배의 폰이 왜 그곳 서랍에 있었는지도 모르겠다..",
+      image: "ending.jpg", photos: ["photo1.jpg", "photo2.jpg", "photo3.jpg", "photo4.jpg"] }
+  ]
+};
+
+/* ════════════════════════════════════════════════
+   아래는 동작 코드 (수정하지 않아도 됩니다)
+   ════════════════════════════════════════════════ */
+
+// ── 포스터: jpg → png → jpeg → webp 순서로 찾아보고 없으면 숨김 ──
+function nextPoster(img) {
+  const left = img.dataset.try ? img.dataset.try.split(",") : [];
+  if (!left.length) { img.remove(); return; }
+  img.dataset.try = left.slice(1).join(",");
+  img.src = `posters/${img.dataset.no}.${left[0]}`;
+}
+
+// ── 기록 리스트 ──
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+}
+const isClear = r => r.clear === "Clear";
+const dateKey = r => {             // "24.11.05" → 241105, "??" 는 뒤로
+  const m = String(r.date).match(/(\d{2})\.(\d{2}|\?\?)\.(\d{2}|\?\?)/);
+  return m ? Number(m[1] + m[2].replace("??", "00") + m[3].replace("??", "00")) : 0;
+};
+let filter = "all";
+
+function renderLog() {
+  const q = document.getElementById("q").value.trim().toLowerCase();
+  const list = document.getElementById("logList");
+  const shown = records
+    .filter(r => filter === "all" || (filter === "clear" && isClear(r)) ||
+                 (filter === "fail" && !isClear(r)) || (filter === "life" && r.rate === "인생테마"))
+    .filter(r => !q || [r.theme, r.store, r.region].join(" ").toLowerCase().includes(q))
+    .sort((a, b) => dateKey(b) - dateKey(a) || b.no - a.no);   // 최근 순
+
+  list.innerHTML = shown.length ? shown.map(r => `
+    <div class="log-item">
+      <button class="log-row" type="button">
+        <span class="name"><b>${esc(r.theme)}</b><small><span class="no">#${r.no}</span>${esc(r.store)} · ${esc(r.region)} · ${esc(r.date)}</small></span>
+        <span class="rate r-${esc(r.rate)}">${esc(r.rate)}</span>
+        <span class="badge ${isClear(r) ? "ok" : "no"}">${isClear(r) ? "탈출" : "실패"}</span>
+      </button>
+      <div class="log-detail">
+        <img class="poster" src="${esc(posters[r.no] || `posters/${r.no}.jpg`)}" data-try="${posters[r.no] ? "" : "png,jpeg,webp"}" data-no="${r.no}" alt="${esc(r.theme)} 포스터" loading="lazy" onerror="nextPoster(this)" onclick="event.stopPropagation(); modal([this.getAttribute('src')], '${esc(r.theme)}')">
+        <dl>
+          <dt>오픈 날짜</dt><dd>${esc(r.open)}</dd>
+          <dt>플레이 날짜</dt><dd>${esc(r.date)}</dd>
+          <dt>남은 시간</dt><dd>${esc(r.left)}</dd>
+          <dt>평가</dt><dd>${esc(r.rate)}</dd>
+          <dt>100방 이후</dt><dd>${esc(r.after100)}</dd>
+          <dt>평균 점수</dt><dd>${esc(r.avg)}</dd>
+          <dt>동행</dt><dd>${r.people ? r.people + "명" : "-"}</dd>
+          <dt>클리어</dt><dd>${esc(r.clear)}</dd>
+          <dt>재방</dt><dd>${esc(r.revisit)}</dd>
+        </dl>
+      </div>
+    </div>`).join("") : `<div class="empty">조건에 맞는 테마가 없어요</div>`;
+  list.querySelectorAll(".log-row").forEach(btn =>
+    btn.addEventListener("click", () => btn.parentElement.classList.toggle("open")));
+}
+
+
+// ── TOP 5 ──
+function renderTops() {
+  for (const key of ["general", "horror"]) {
+    const t = top5[key], el = document.getElementById("top-" + key);
+    el.innerHTML = `<h2>${key === "horror" ? "🩸" : "🏆"} ${esc(t.title)}</h2>` + t.nos.map((no, i) => {
+      const r = records.find(x => x.no === no); if (!r) return "";
+      return `<article class="top-card r${i + 1}">
+        <div class="rank">${i + 1}</div>
+        <img class="tposter" src="posters/${no}.jpg" alt="${esc(r.theme)} 포스터" loading="lazy" onerror="nextPoster(this)" data-try="png,jpeg,webp" data-no="${no}" onclick="modal([this.getAttribute('src')], '${esc(r.theme)}')">
+        <div class="tinfo">
+          <b>${esc(r.theme)}</b>
+          <small>${esc(r.store)} · ${esc(r.region)}</small>
+          <div class="tmeta"><span class="rate r-${esc(r.rate)}">${esc(r.rate)}</span>
+            <span class="badge ${r.clear === "Clear" ? "ok" : "no"}">${r.clear === "Clear" ? "탈출" : "실패"}</span></div>
+          <div class="tline">⏱ ${esc(r.left)} · ${esc(r.date)} 플레이</div>
+          <div class="tline">${esc(r.avg)}</div>
+        </div></article>`;
+    }).join("");
+  }
+}
+
+function renderCounts() {
+  const total = records.length, clear = records.filter(isClear).length;
+  document.getElementById("cntTotal").textContent = total;
+  document.getElementById("cntClear").textContent = clear;
+  document.getElementById("cntRate").textContent = total ? Math.round(clear / total * 100) + "%" : "0%";
+}
+document.getElementById("q").addEventListener("input", renderLog);
+document.querySelectorAll("#filters button").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll("#filters button").forEach(x => x.classList.remove("on"));
+  b.classList.add("on"); filter = b.dataset.f; renderLog();
+}));
+
+// ── 퀴즈 ──
+const screen = document.getElementById("screen");
+const stageLabel = document.getElementById("stageLabel");
+const progressEl = document.getElementById("progress");
+const timerEl = document.getElementById("timer");
+let current = -1, timerId = null, remain = 0, hintsUsed = 0, roomTimer = null, roomRemain = 0;
+let typeTimers = [], sceneTimers = [];
+const DIR = { U: "↑", D: "↓", L: "←", R: "→" };
+const puzzles = quiz.scenes.filter(s => s.type === "puzzle");
+const GAP = "40% 0%,44.06% 12%,43.13% 26%,45% 42%,43.75% 56%,45.94% 72%,44.75% 86%,46.38% 100%,56.56% 100%,55% 86%,56.88% 70%,55.25% 56%,56.38% 40%,54.75% 25%,56.13% 11%,53.13% 0%";
+
+function norm(s) { return String(s).trim().toUpperCase().replace(/\s+/g, ""); }
+function fmt(sec) { sec = Math.max(0, sec); return String(Math.floor(sec / 60)).padStart(2, "0") + ":" + String(sec % 60).padStart(2, "0"); }
+function later(fn, ms) { const t = setTimeout(fn, ms); sceneTimers.push(t); return t; }
+function clearScene() {
+  typeTimers.forEach(clearTimeout); typeTimers = [];
+  sceneTimers.forEach(clearTimeout); sceneTimers = [];
+  clearInterval(roomTimer); roomTimer = null; stopLoops(); stopLoop("clock");
+}
+
+/* ───────── 사운드 (파일 없이 합성) ───────── */
+let ac = null, muted = false, master = null, drone = null, loopTimer = null;
+function audio() {
+  if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); master = ac.createGain();
+    const comp = ac.createDynamicsCompressor(); comp.threshold.value = -10; comp.ratio.value = 6;
+    master.connect(comp).connect(ac.destination); } catch (e) { return null; } }
+  ac.resume(); master.gain.value = muted ? 0 : 1; return ac;
+}
+function noiseBuf(sec) {
+  const b = ac.createBuffer(1, ac.sampleRate * sec, ac.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b;
+}
+function env(g, t, a, peak, dec) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + dec); }
+function thump(freq, vol, dec) {
+  if (!audio()) return; const t = ac.currentTime;
+  const o = ac.createOscillator(), g = ac.createGain(); o.type = "sine";
+  o.frequency.setValueAtTime(freq * 1.6, t); o.frequency.exponentialRampToValueAtTime(freq, t + 0.08);
+  env(g, t, 0.005, vol, dec); o.connect(g).connect(master); o.start(t); o.stop(t + dec + 0.05);
+}
+function noiseHit(vol, dec, type, freq) {
+  if (!audio()) return; const t = ac.currentTime;
+  const s = ac.createBufferSource(); s.buffer = noiseBuf(dec + 0.1);
+  const f = ac.createBiquadFilter(); f.type = type; f.frequency.value = freq;
+  const g = ac.createGain(); env(g, t, 0.005, vol, dec);
+  s.connect(f).connect(g).connect(master); s.start(t);
+}
+const sfx = {
+  ok() { if (!audio()) return; [0, .09].forEach((d, i) => later(() => { noiseHit(.5, .05, "highpass", 2500); thump(i ? 180 : 140, .25, .08); }, d * 1000)); },
+  bad() { thump(70, .6, .35); noiseHit(.15, .2, "lowpass", 300); },
+  click() { noiseHit(.25, .03, "highpass", 3000); },
+  static() { if (!audio()) return; noiseHit(.35, 1.6, "highpass", 1200); },
+  step(v) { thump(62, v, .18); noiseHit(v * .6, .14, "lowpass", 260); },
+  beat(v) { thump(55, v, .16); later(() => thump(50, v * .7, .16), 170); },
+  notify() { if (!audio()) return; const t = ac.currentTime;
+    [[1567.98, 0], [2093, .16], [1567.98, .32]].forEach(([f, d]) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = "sine"; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t + d); g.gain.exponentialRampToValueAtTime(.35, t + d + .01); g.gain.exponentialRampToValueAtTime(0.0001, t + d + .45); o.connect(g).connect(master); o.start(t + d); o.stop(t + d + .5); }); },
+  whoosh() { if (!audio()) return; const t = ac.currentTime, s = ac.createBufferSource(); s.buffer = noiseBuf(1);
+    const f = ac.createBiquadFilter(); f.type = "bandpass"; f.Q.value = 1.5; f.frequency.setValueAtTime(300, t); f.frequency.exponentialRampToValueAtTime(1800, t + .35);
+    const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(.5, t + .15); g.gain.exponentialRampToValueAtTime(0.0001, t + .5);
+    s.connect(f).connect(g).connect(master); s.start(t); },
+  scream() { if (!audio()) return; const t = ac.currentTime;
+    for (const f of [520, 553, 790, 1180]) { const o = ac.createOscillator(), g = ac.createGain(); o.type = "sawtooth";
+      o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * .55, t + 1.2); g.gain.setValueAtTime(.4, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.3); o.connect(g).connect(master); o.start(t); o.stop(t + 1.4); }
+    noiseHit(1.2, 1.1, "highpass", 600); thump(40, 1.2, .8); }
+};
+/* 배경음: drone · wind · eerie · temple · tense */
+let amb = null, ambName = "";
+function lfo(freq, depth, target) { const o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = freq; g.gain.value = depth; o.connect(g).connect(target); o.start(); return o; }
+function setAmb(name) {
+  if (name === ambName) return;
+  if (amb) { const old = amb; old.g.gain.cancelScheduledValues(ac.currentTime); old.g.gain.setTargetAtTime(0, ac.currentTime, .5); setTimeout(() => old.stop(), 2500); }
+  amb = null; ambName = name || "";
+  if (!name || !audio()) return;
+  const g = ac.createGain(); g.gain.value = 0; g.connect(master);
+  const nodes = [], timers = [];
+  const add = n => { nodes.push(n); return n; };
+  const osc = (type, f) => { const o = add(ac.createOscillator()); o.type = type; o.frequency.value = f; o.start(); return o; };
+  const noise = () => { const n = add(ac.createBufferSource()); n.buffer = noiseBuf(4); n.loop = true; n.start(); return n; };
+  let level = .05;
+  if (name === "drone") {
+    const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 180; lp.connect(g);
+    osc("sawtooth", 55).connect(lp); osc("sawtooth", 58.2).connect(lp);
+    const nf = ac.createBiquadFilter(); nf.type = "bandpass"; nf.frequency.value = 400; nf.Q.value = .6;
+    const ng = ac.createGain(); ng.gain.value = .25; noise().connect(nf).connect(ng).connect(g);
+    level = .05;
+  }
+  if (name === "wind") {
+    for (const [f, q, r] of [[500, 1.2, .07], [900, 2, .11], [260, .8, .05]]) {
+      const bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = f; bp.Q.value = q;
+      const vg = ac.createGain(); vg.gain.value = .5;
+      noise().connect(bp).connect(vg).connect(g);
+      add(lfo(r, f * .55, bp.frequency)); add(lfo(r * 1.7, .35, vg.gain));
+    }
+    level = .2;
+  }
+  if (name === "creak") {   // 대저택 · 신사에 들어온 느낌
+    // 넓은 공간의 낮은 공기음
+    const rt = ac.createBiquadFilter(); rt.type = "lowpass"; rt.frequency.value = 220;
+    const rg = ac.createGain(); rg.gain.value = .9; noise().connect(rt).connect(rg).connect(g);
+    const hum = osc("sine", 49); const hg = ac.createGain(); hg.gain.value = .25; hum.connect(hg).connect(g); add(lfo(.05, .1, hg.gain));
+    // 메아리(긴 잔향)
+    const air = ac.createBiquadFilter(); air.type = "bandpass"; air.frequency.value = 520; air.Q.value = .5;
+    const ag = ac.createGain(); ag.gain.value = .18; noise().connect(air).connect(ag).connect(g); add(lfo(.04, .08, ag.gain));
+    const pad = osc("triangle", 98); const pg = ac.createGain(); pg.gain.value = .07; pad.connect(pg).connect(g); add(lfo(.06, .05, pg.gain));
+    level = .45;
+  }
+  if (name === "eerie") {
+    const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 2400; lp.connect(g);
+    for (const f of [880, 932.3, 1244.5]) { const o = osc("sine", f); const vg = ac.createGain(); vg.gain.value = .12; o.connect(vg).connect(lp); add(lfo(.13 + f / 9000, 3, o.frequency)); add(lfo(.2, .1, vg.gain)); }
+    const lo = osc("triangle", 41.2); const lg = ac.createGain(); lg.gain.value = .6; lo.connect(lg).connect(g);
+    const swell = () => { if (!ambName) return; const t = ac.currentTime, s = ac.createBufferSource(); s.buffer = noiseBuf(4);
+      const f = ac.createBiquadFilter(); f.type = "bandpass"; f.Q.value = 3; f.frequency.setValueAtTime(200, t); f.frequency.exponentialRampToValueAtTime(3000, t + 3.5);
+      const sg = ac.createGain(); sg.gain.setValueAtTime(0.0001, t); sg.gain.exponentialRampToValueAtTime(.35, t + 3.4); sg.gain.exponentialRampToValueAtTime(0.0001, t + 3.7);
+      s.connect(f).connect(sg).connect(g); s.start(t); timers.push(setTimeout(swell, 9000 + Math.random() * 7000)); };
+    timers.push(setTimeout(swell, 4000));
+    level = .11;
+  }
+  if (name === "temple") {
+    const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 500; lp.connect(g);
+    for (const f of [73.4, 110, 146.8]) { const o = osc("triangle", f); const vg = ac.createGain(); vg.gain.value = .3; o.connect(vg).connect(lp); add(lfo(.07, .15, vg.gain)); }
+    const bowl = () => { if (!ambName) return; const t = ac.currentTime;
+      [[196, .5], [196 * 2.76, .25], [196 * 5.4, .12], [198.5, .4]].forEach(([f, v]) => { const o = ac.createOscillator(), og = ac.createGain(); o.frequency.value = f;
+        og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(v, t + .01); og.gain.exponentialRampToValueAtTime(0.0001, t + 7); o.connect(og).connect(g); o.start(t); o.stop(t + 7.2); });
+      timers.push(setTimeout(bowl, 8000 + Math.random() * 4000)); };
+    const moktak = () => { if (!ambName) return; for (let k = 0; k < 3; k++) setTimeout(() => { if (ambName !== "temple") return; const t = ac.currentTime, o = ac.createOscillator(), og = ac.createGain();
+        o.frequency.setValueAtTime(820, t); o.frequency.exponentialRampToValueAtTime(520, t + .05); og.gain.setValueAtTime(.5, t); og.gain.exponentialRampToValueAtTime(0.0001, t + .12); o.connect(og).connect(g); o.start(t); o.stop(t + .15); }, k * 420);
+      timers.push(setTimeout(moktak, 11000 + Math.random() * 5000)); };
+    timers.push(setTimeout(bowl, 600)); timers.push(setTimeout(moktak, 5000));
+    level = .25;
+  }
+  if (name === "tense") {
+    const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1400; lp.connect(g);
+    const s1 = osc("sawtooth", 220), s2 = osc("sawtooth", 233.1); const tg = ac.createGain(); tg.gain.value = .12; s1.connect(tg); s2.connect(tg); tg.connect(lp);
+    add(lfo(9, .1, tg.gain));
+    const pulse = () => { if (!ambName) return; const t = ac.currentTime, o = ac.createOscillator(), og = ac.createGain();
+      o.frequency.setValueAtTime(90, t); o.frequency.exponentialRampToValueAtTime(45, t + .15); og.gain.setValueAtTime(.9, t); og.gain.exponentialRampToValueAtTime(0.0001, t + .25);
+      o.connect(og).connect(g); o.start(t); o.stop(t + .3);
+      const p = typeof roomRemain === "number" && roomTotal ? 1 - roomRemain / roomTotal : 0;
+      timers.push(setTimeout(pulse, 520 - p * 280)); };
+    pulse(); level = .35;
+  }
+  g.gain.setTargetAtTime(level, ac.currentTime, 1.2);
+  amb = { g, stop() { timers.forEach(clearTimeout); nodes.forEach(n => { try { n.stop(); } catch (e) {} }); g.disconnect(); } };
+}
+function stopDrone() { setAmb(""); }
+let roomTotal = 0;
+function heartbeat(bpm) {
+  clearTimeout(loopTimer);
+  const tick = () => { sfx.beat(.7); loopTimer = setTimeout(tick, 60000 / bpm.value); };
+  tick();
+}
+function footsteps(total) {
+  clearTimeout(loopTimer); let left = true;
+  const tick = () => {
+    const p = 1 - Math.max(roomRemain, 0) / total;
+    sfx.step(.35 + p * 1.4);
+    loopTimer = setTimeout(tick, 1100 - p * 820 + (left ? 0 : 60)); left = !left;
+  };
+  tick();
+}
+function stopLoops() { clearTimeout(loopTimer); loopTimer = null; }
+
+/* ───────── 파일 사운드 (sounds 폴더) ───────── */
+const files = { bgm: { src: "sounds/bgm.mp3", vol: .55, loop: true }, clock: { src: "sounds/clock.mp3", vol: .9, loop: true },
+                impact: { src: "sounds/impact.mp3", vol: .9 }, jumpscare: { src: "sounds/jumpscare.mp3", vol: 1 } };
+const players = {};
+function player(name) { if (!players[name]) { const f = files[name], a = new Audio(f.src); a.loop = !!f.loop; a.preload = "auto"; a.volume = 0; players[name] = a; } return players[name]; }
+function fadeTo(a, v, ms, done) { clearInterval(a._f); const st = a.volume, t0 = Date.now();
+  a._f = setInterval(() => { const k = Math.min(1, (Date.now() - t0) / ms); a.volume = Math.max(0, Math.min(1, st + (v - st) * k)); if (k >= 1) { clearInterval(a._f); done && done(); } }, 40); }
+function playLoop(name) { const a = player(name); a.muted = muted; if (a.paused) { a.volume = 0; a.play().catch(() => {}); } fadeTo(a, files[name].vol, 1200); }
+function stopLoop(name) { const a = players[name]; if (a && !a.paused) fadeTo(a, 0, 900, () => a.pause()); }
+function playOnce(name) { const a = player(name); a.muted = muted; a.currentTime = 0; a.volume = files[name].vol; a.play().catch(() => {}); }
+let musicNow = "";
+function setMusic(name) { if (name === musicNow) return; if (musicNow) stopLoop(musicNow); musicNow = name || ""; if (musicNow) playLoop(musicNow); }
+
+/* ───────── 화면 도구 ───────── */
+function typeText(el, text, speed = 26, done) {
+  el.textContent = ""; let i = 0;
+  const step = () => {
+    if (i >= text.length) { done && done(); return; }
+    el.textContent += text[i++];
+    typeTimers.push(setTimeout(step, text[i - 1] === "\n" ? 260 : speed));
+  };
+  el.onclick = () => { typeTimers.forEach(clearTimeout); typeTimers = []; el.textContent = text; el.onclick = null; done && done(); };
+  step();
+}
+function modal(images, title) {
+  const m = document.createElement("div");
+  m.className = "lightbox";
+  m.innerHTML = `<div class="lb-inner">${title ? `<div class="lb-title">${esc(title)}</div>` : ""}${images.map(s => `<img src="${s.includes("/") ? esc(s) : "img/" + esc(s)}" alt="">`).join("")}</div><span>닫기 ✕</span>`;
+  m.onclick = e => { if (e.target === m || e.target.tagName === "SPAN") { m.remove(); sfx.click(); } };
+  document.body.appendChild(m); sfx.click();
+}
+function stageHTML(sc) {
+  if (!sc.image) return "";
+  let inner = `<img class="base" src="img/${esc(sc.image)}" alt="${esc(sc.title)}">`;
+  if (sc.overlay) inner += `<img class="ov ${sc.overlay.fx}" src="img/${esc(sc.overlay.src)}" alt="">`;
+  if (sc.fog) inner += `<div class="fog"><i></i><i></i><i></i></div>`;
+  if (sc.passer) inner += `<div class="passer"><svg viewBox="0 0 100 160"><path d="M50 4 L38 40 C20 44 14 60 16 76 C18 92 30 100 40 102 L40 108 C20 112 6 130 4 160 L96 160 C94 130 80 112 60 108 L60 102 C72 98 84 90 84 74 C86 58 78 44 62 40 Z" fill="#000"/></svg></div>`;
+  if (sc.fx === "hide") inner += `<div class="gap" style="clip-path:polygon(${GAP})"><div class="shadow"></div></div>`;
+  (sc.spots || []).forEach((s, k) =>
+    inner += `<button type="button" class="spot" data-k="${k}" style="--d:${(k * 0.7).toFixed(1)}s;left:${s.x}%;top:${s.y}%;width:${s.w}%;height:${s.h}%" aria-label="${esc(s.label)}"></button>`);
+  return `<div class="sstage ${sc.dark ? "dark" : ""} ${sc.fx || ""} ${sc.spots ? "has-spots" : ""} ${sc.type === "find" ? "finding" : ""}">
+      <div class="kb">${inner}</div>${sc.dark ? '<div class="torch"></div>' : ""}${sc.limit ? `<div class="count" id="count">${sc.limit}</div>` : ""}${(sc.fx || "").includes("tv") ? '<div class="tvfx"></div>' : ""}${(sc.fx || "").includes("snuff") ? '<div class="snoise"></div><div class="roll"></div>' : ""}
+    </div>${sc.tip ? `<p class="tip">👉 ${esc(sc.tip)}</p>` : '<p class="tip">그림을 누르면 크게 볼 수 있어요</p>'}`;
+}
+
+function renderProgress() {
+  const doneCount = quiz.scenes.slice(0, Math.max(current, 0)).filter(s => s.type === "puzzle").length;
+  const nowIsPuzzle = quiz.scenes[current] && quiz.scenes[current].type === "puzzle";
+  progressEl.innerHTML = puzzles.map((_, i) =>
+    `<span class="${i < doneCount ? "done" : (i === doneCount && nowIsPuzzle) ? "now" : ""}"></span>`).join("");
+}
+function startTimer() {
+  remain = quiz.timeLimitMin * 60; timerEl.textContent = fmt(remain);
+  clearInterval(timerId);
+  timerId = setInterval(() => {
+    remain--; timerEl.textContent = fmt(remain);
+    if (remain <= 0) { clearInterval(timerId); showFail("시간이 다 됐다.\n산장의 불이 꺼지고, 다시 조용해졌다.", -1); }
+  }, 1000);
+}
+function transition(fn) {
+  screen.classList.add("fade");
+  setTimeout(() => { fn(); screen.classList.remove("fade"); }, 450);
+}
+
+/* ───────── 시작 ───────── */
+function showIntro() {
+  clearScene(); setAmb(""); setMusic(""); document.querySelector(".room").classList.add("cover");
+  current = -1; hintsUsed = 0; clearInterval(timerId);
+  timerEl.textContent = fmt(quiz.timeLimitMin * 60);
+  stageLabel.textContent = quiz.no;
+  renderProgress();
+  screen.innerHTML = `
+    <div class="center intro">
+      <div class="eyebrow2">${esc(quiz.no)}</div>
+      <h3 class="ttl">${esc(quiz.title)}</h3>
+      <div class="tmeta2"><span>난이도 <i>★★</i><i class="off">★★★</i></span><span>공포도 <i>★</i><i class="off">★★★★</i></span><span>시간 <b>${quiz.timeLimitMin}분</b></span></div>
+      <p class="credit">${esc(quiz.credit)}</p>
+      <hr>
+      <p class="story">${esc(quiz.premise)}</p>
+      ${quiz.poster ? `<img class="poster-img" src="img/${esc(quiz.poster)}" alt="쭈괴 신입회원 모집 포스터" onclick="modal(['${esc(quiz.poster)}'])">` : ""}
+      <hr>
+      <p class="sound">🔊 소리를 꼭! 켜고 플레이해 주세요!</p>
+      <p class="warn">⚠️ 다수의 공포 요소가 있는 사진들이 나옵니다..<br>무서운 걸 싫어하시는 분들은 플레이하지 말아 주세요 ㅜㅜ</p>
+      <p class="stat-line">문제 ${puzzles.length}개 · 제한시간 ${quiz.timeLimitMin}분</p><br>
+      <button class="btn" id="startBtn">입장하기</button>
+    </div>`;
+  document.getElementById("startBtn").onclick = () => { document.querySelector(".room").classList.remove("cover"); audio(); sfx.click(); startTimer(); transition(() => goScene(0)); };
+}
+
+function goScene(i) {
+  clearScene();
+  current = i;
+  const sc = quiz.scenes[i];
+  if (sc.ending) return showClear(sc);
+  const pIdx = quiz.scenes.slice(0, i + 1).filter(s => s.type === "puzzle").length;
+  stageLabel.textContent = sc.type === "puzzle" ? `ROOM ${pIdx} / ${puzzles.length}` : "STORY";
+  renderProgress();
+
+  let html = `<h3>${esc(sc.title)}</h3><p class="story" id="storyText"></p>${stageHTML(sc)}`;
+  if (sc.type === "story") html += `<p class="story after" id="afterText"></p><div class="lock"><button class="btn" id="nextBtn" ${sc.fx === "hide" ? "hidden" : ""}>다음 ▶</button></div>`;
+  if (sc.type === "find") html += `<div class="msg" id="msg"></div>`;
+  if (sc.type === "puzzle") html += lockHTML(sc);
+  screen.innerHTML = html;
+  typeText(document.getElementById("storyText"), sc.story);
+
+  // 그림 클릭
+  const stage = screen.querySelector(".sstage");
+  if (stage) {
+    if (!sc.spots && !sc.dark && sc.fx !== "hide") stage.onclick = () => modal([sc.image]);
+    if (sc.dark) {
+      const torch = stage.querySelector(".torch");
+      const move = e => { const r = stage.getBoundingClientRect(); torch.style.setProperty("--x", (e.clientX - r.left) + "px"); torch.style.setProperty("--y", (e.clientY - r.top) + "px"); };
+      stage.addEventListener("pointermove", move); stage.addEventListener("pointerdown", move);
+    }
+    stage.querySelectorAll(".spot").forEach(b => b.onclick = e => {
+      e.stopPropagation(); const s = sc.spots[b.dataset.k];
+      if (s.open) modal(s.open, s.label);
+      if (s.go) { sfx.click(); transition(() => goScene(i + 1)); }
+      if (s.say) { const m = document.getElementById("msg"); m.className = "msg bad"; m.textContent = s.say; sfx.bad(); }
+    });
+    if (sc.type === "find") stage.onclick = () => { const m = document.getElementById("msg"); m.className = "msg bad"; m.textContent = sc.miss; sfx.bad(); };
+  }
+
+  // 장면 연출 / 소리
+  if (sc.amb !== undefined) setAmb(sc.amb);
+  setMusic(sc.music);
+  if (sc.once) later(() => playOnce(sc.once), 300);
+  if (sc.sound === "static") { sfx.static(); later(sfx.static, 2200); }
+  if (sc.sound === "notify") later(sfx.notify, 1200);
+  if (sc.passer) { const p = stage.querySelector(".passer");
+    const run = () => { p.classList.add("go"); [0, 1100, 2200, 3300].forEach(d => later(() => sfx.step(.12), d)); };
+    later(run, 3500); }
+  if (sc.limit) { let left = sc.limit; const c = document.getElementById("count"); playLoop("clock");
+    const tick = () => { left--; c.textContent = left; c.classList.toggle("hot", left <= 3); sfx.click();
+      if (left <= 0) { stopLoops(); stopLoop("clock"); jumpscare(() => showFail(sc.failText, i)); return; } later(tick, 1000); };
+    later(tick, 1000); }
+  if (sc.sound === "heartbeat") heartbeat({ value: sc.fx === "hide" ? 92 : 120 });
+  if (sc.type === "story") {
+    const next = document.getElementById("nextBtn");
+    next.onclick = () => { sfx.click();
+      if (sc.walk) { next.disabled = true; screen.classList.add("walk"); [0, 600, 1200].forEach(d => later(() => sfx.step(.9), d)); later(() => { screen.classList.remove("walk"); transition(() => goScene(i + 1)); }, 1700); }
+      else transition(() => goScene(i + 1)); };
+    if (sc.fx === "hide") {
+      later(() => stage.querySelector(".shadow").classList.add("pass"), 1500);
+      later(() => { stopLoops(); heartbeat({ value: 60 }); later(stopLoops, 3000);
+        typeText(document.getElementById("afterText"), sc.after, 30, () => next.hidden = false); }, 11800);
+    }
+  }
+  if (sc.type === "puzzle") bindLock(sc, i);
+}
+
+function lockHTML(sc) {
+  let h = "";
+  if (sc.phoneHint) h += `<button class="btn phint" type="button" id="phoneHintBtn">📱 폰 힌트 보기</button>`;
+  if (sc.timer) h += `<div class="roomtimer" id="roomTimer">⏱ ${fmt(sc.timer)}</div>`;
+  if (sc.input === "dir") {
+    h += `<div class="dirlock"><div class="dirshow" id="dirShow">&nbsp;</div>
+      <div class="dirpad"><span></span><button type="button" data-d="U">↑</button><span></span>
+      <button type="button" data-d="L">←</button><button type="button" class="clr" data-d="C">지우기</button><button type="button" data-d="R">→</button>
+      <span></span><button type="button" data-d="D">↓</button><span></span></div>
+      <div class="lock"><button class="btn" id="dirOk">🔓 열기</button><button class="btn ghost" type="button" id="hintBtn">힌트 보기</button></div></div>`;
+  } else {
+    const ph = sc.input === "word" ? "영단어 입력" : "숫자 " + sc.len + "자리";
+    h += `<form class="lock" id="lockForm" autocomplete="off">
+      <input id="ans" placeholder="${ph}" aria-label="정답" maxlength="${sc.len || 12}" ${sc.input === "digits" ? 'inputmode="numeric"' : ""}>
+      <button class="btn" type="submit">🔓 열기</button><button class="btn ghost" type="button" id="hintBtn">힌트 보기</button></form>`;
+  }
+  return h + `<div class="hint" id="hintBox">💡 ${esc(sc.hint)}</div><div class="msg" id="msg"></div>`;
+}
+
+function bindLock(sc, i) {
+  document.getElementById("hintBtn").onclick = () => {
+    const box = document.getElementById("hintBox");
+    if (!box.classList.contains("show")) { box.classList.add("show"); hintsUsed++; sfx.click(); }
+  };
+  if (sc.phoneHint) document.getElementById("phoneHintBtn").onclick = () => modal(sc.phoneHint, "암호 힌트");
+  const msg = document.getElementById("msg");
+  const ok = () => { clearInterval(roomTimer); stopLoops(); sfx.ok(); msg.className = "msg good"; msg.textContent = "철컥! 자물쇠가 열렸다."; setTimeout(() => transition(() => goScene(i + 1)), 900); };
+  const bad = el => { sfx.bad(); msg.className = "msg bad"; msg.textContent = "…아무 일도 일어나지 않았다."; if (el) { el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake"); } };
+  if (sc.input === "dir") {
+    let seq = []; const show = document.getElementById("dirShow");
+    const draw = () => show.textContent = seq.length ? seq.map(d => DIR[d]).join(" ") : " ";
+    screen.querySelectorAll(".dirpad button").forEach(b => b.onclick = () => { sfx.click(); if (b.dataset.d === "C") seq = []; else if (seq.length < 8) seq.push(b.dataset.d); draw(); });
+    document.getElementById("dirOk").onclick = () => seq.join("") === sc.answer.join("") ? ok() : (bad(show), seq = [], draw());
+  } else {
+    const input = document.getElementById("ans");
+    document.getElementById("lockForm").onsubmit = e => {
+      e.preventDefault();
+      const answers = Array.isArray(sc.answer) ? sc.answer : [sc.answer];
+      answers.some(a => norm(a) === norm(input.value)) ? ok() : (bad(input), input.select());
+    };
+  }
+  if (sc.timer) {
+    roomRemain = sc.timer; roomTotal = sc.timer; const rt = document.getElementById("roomTimer");
+    const room = document.querySelector(".room");
+    roomTimer = setInterval(() => {
+      roomRemain--; rt.textContent = "⏱ " + fmt(roomRemain);
+      room.style.setProperty("--danger", (1 - roomRemain / sc.timer).toFixed(3));
+      if (roomRemain <= 60) rt.classList.add("urgent");
+      if (roomRemain <= 0) { clearInterval(roomTimer); stopLoops(); stopLoop("clock"); setAmb(""); jumpscare(() => showFail(sc.failText || "시간 초과", i)); }
+    }, 1000);
+    if (sc.footsteps) footsteps(sc.timer);
+    playLoop("clock");
+  }
+}
+
+function jumpscare(done) {
+  playOnce("jumpscare");
+  const j = document.createElement("div"); j.className = "jump";
+  j.innerHTML = `<img src="img/jump.jpg" alt=""><div class="jscan"></div>`;
+  document.body.appendChild(j);
+  setTimeout(() => { j.remove(); done(); }, 850);
+}
+
+function showClear(sc) {
+  clearScene(); clearInterval(timerId); setAmb(""); setMusic("");
+  document.querySelector(".room").style.removeProperty("--danger");
+  stageLabel.textContent = "ESCAPED"; current = quiz.scenes.length; renderProgress();
+  const used = quiz.timeLimitMin * 60 - remain;
+  screen.innerHTML = `<div class="center"><h3>탈출 성공</h3>
+    <p class="story" id="endText"></p>
+    <div class="slides" id="slides"><img id="slideImg" alt=""></div>
+    ${sc.photos ? `<div class="photos" id="endPhotos">${sc.photos.map((p, k) => `<img src="img/${esc(p)}" alt="" style="--r:${[-5, 3, -2, 6][k % 4]}deg">`).join("")}</div><p class="tip" id="endTip" style="text-align:center;opacity:0;transition:opacity 1s">명준 선배 폰의 사진첩 · 사진을 눌러 보세요</p>` : ""}
+    <p class="end-mark" id="endMark">끝..</p>
+    <div class="stat-line">걸린 시간 ${fmt(used)} · 사용한 힌트 ${hintsUsed}개</div><br>
+    <button class="btn" id="againBtn">처음부터 다시</button></div>`;
+  typeText(document.getElementById("endText"), sc.story, 40, () => {
+    const box = document.getElementById("slides"), img = document.getElementById("slideImg");
+    const seq = [...(sc.photos || []), sc.image].filter(Boolean);
+    let k = 0;
+    const show = () => {
+      const last = k === seq.length - 1;
+      img.classList.remove("in"); 
+      later(() => {
+        img.src = "img/" + seq[k]; img.className = last ? "final" : "";
+        void img.offsetWidth; img.classList.add("in");
+        if (k === seq.length - 2) later(() => thump(45, .8, .6), 200);   // 이빨 사진에서 쿵
+        if (last) {
+          img.onclick = () => modal([sc.image]);
+          later(() => { const ph = document.getElementById("endPhotos"); if (ph) { ph.classList.add("show"); document.getElementById("endTip").style.opacity = 1;
+            ph.querySelectorAll("img").forEach((el, j) => el.onclick = () => modal([sc.photos[j]])); } }, 1800);
+          later(() => document.getElementById("endMark").classList.add("show"), 3600);
+        } else { k++; later(show, k === seq.length - 1 ? 4000 : 3200); }
+      }, 700);
+    };
+    box.classList.add("on"); later(show, 500);
+  });
+  document.getElementById("againBtn").onclick = () => transition(showIntro);
+}
+
+function showFail(text, retryIdx) {
+  clearScene(); sfx.bad();
+  document.querySelector(".room").style.removeProperty("--danger");
+  stageLabel.textContent = "FAILED";
+  screen.innerHTML = `<div class="center fail"><div class="big">👁️</div><h3>실패</h3><p class="story">${esc(text)}</p>
+    ${retryIdx >= 0 ? `<button class="btn" id="retryBtn">이 방 다시 도전</button> ` : ""}<button class="btn ghost" id="againBtn">처음부터 다시</button></div>`;
+  if (retryIdx >= 0) document.getElementById("retryBtn").onclick = () => transition(() => goScene(retryIdx));
+  document.getElementById("againBtn").onclick = () => transition(showIntro);
+}
+
+// 소리 끄기 / 켜기
+(function () {
+  const b = document.createElement("button");
+  b.className = "mute"; b.type = "button"; b.textContent = "🔊";
+  b.onclick = () => { muted = !muted; b.textContent = muted ? "🔇" : "🔊"; if (master) master.gain.value = muted ? 0 : 1; Object.values(players).forEach(a => a.muted = muted); };
+  document.querySelector(".hud").appendChild(b);
+})();
+
+renderCounts();
+renderTops();
+document.getElementById("topToggle").onclick = () => {
+  const t = document.getElementById("tops"), open = t.classList.toggle("collapsed") === false;
+  document.getElementById("topToggle").textContent = open ? "TOP 5 접기 ▲" : "TOP 5 전체 펼치기 ▼";
+  if (!open) t.scrollIntoView({ behavior: "smooth", block: "start" });
+};
+document.getElementById("footCount").textContent = records.length;
+renderLog();
+showIntro();
+</script>
+</body>
+</html>
