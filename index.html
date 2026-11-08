@@ -244,9 +244,29 @@
   .foot-line { color: #cfc7b8; font-size: 14px; letter-spacing: .03em; } .foot-line i { font-style: normal; color: #4a443b; margin: 0 8px; }
   .foot-sub { color: var(--muted); font-size: 12.5px; margin-top: 8px; } .foot-sub span { color: var(--gold); font-weight: 700; }
   .foot-copy { color: #5f5850; font-size: 11.5px; margin-top: 6px; }
-  .room::after { content: ""; position: absolute; inset: 0; background: url(img/theme-poster.jpg) center 62% / cover no-repeat; opacity: 0; transition: opacity 1.2s; pointer-events: none; }
+  .room::after { content: ""; position: absolute; inset: 0; background: url(theme-poster.jpg) center 62% / cover no-repeat; opacity: 0; transition: opacity 1.2s; pointer-events: none; }
   .room.cover::after { opacity: .17; }
   .room > * { position: relative; z-index: 1; }
+  /* 지도 · 랜덤 */
+  .extras { max-width: 1200px; margin: 0 auto; padding: 18px 28px 10px; display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px; }
+  .extras h2 { font-size: 17px; margin-bottom: 14px; }
+  .mapbox, .pickbox { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; }
+  .mapwrap { display: grid; grid-template-columns: 1fr 200px; gap: 14px; align-items: start; }
+  #koMap { width: 100%; max-height: 460px; }
+  .mdot { cursor: pointer; outline: none; } .mdot circle:nth-child(2) { transition: fill .2s; }
+  .mdot:hover circle:nth-child(2), .mdot.on circle:nth-child(2) { fill: #ffe08a; } .mdot.on rect { fill: #3a3222; }
+  .mapinfo { font-size: 13px; color: #cfc7b8; padding-top: 6px; }
+  .mapinfo b { font-size: 18px; color: var(--ink); } .mapinfo span { color: var(--muted); margin-left: 6px; }
+  .mapinfo ul { list-style: none; margin: 10px 0; } .mapinfo li { padding: 5px 0; border-bottom: 1px solid var(--line); }
+  .mapinfo em { font-style: normal; margin-left: 4px; }
+  .linkbtn { background: none; border: 0; color: var(--gold); font-size: 12.5px; padding: 0; }
+  .pick-sub { color: var(--muted); font-size: 13px; margin: -8px 0 14px; }
+  .pick-card { display: grid; grid-template-columns: 110px 1fr; gap: 14px; align-items: center; min-height: 160px; padding: 12px; margin-bottom: 14px;
+    border: 1px dashed #4a443b; border-radius: 10px; }
+  .pick-card img { width: 110px; height: 146px; object-fit: cover; border-radius: 6px; cursor: zoom-in; }
+  .pick-card.spinning { filter: blur(1.5px); } .pick-card .pinfo b { display: block; font-size: 18px; } .pick-card small { color: var(--muted); }
+  .pick-empty { grid-column: 1 / -1; text-align: center; font-size: 60px; color: #3a342c; font-family: Georgia, serif; }
+  @media (max-width: 900px) { .extras { grid-template-columns: 1fr; } .mapwrap { grid-template-columns: 1fr; } }
   /* TOP 5 */
   .tops { max-width: 1200px; margin: 0 auto; padding: 8px 28px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
   .top-col h2 { font-size: 17px; margin-bottom: 14px; letter-spacing: .02em; }
@@ -316,7 +336,7 @@
   .slides img.final { cursor: zoom-in; transition: opacity 2s, transform 6s ease-out; }
   .slides:has(img.final) { aspect-ratio: 16 / 10; max-width: 820px; }
 
-  .snoise { position: absolute; inset: 0; pointer-events: none; background: url(img/static.png); opacity: .55; mix-blend-mode: screen; animation: stat .25s steps(4) infinite; }
+  .snoise { position: absolute; inset: 0; pointer-events: none; background: url(static.png); opacity: .55; mix-blend-mode: screen; animation: stat .25s steps(4) infinite; }
   @keyframes stat { 0% { background-position: 0 0; } 25% { background-position: -91px 47px; } 50% { background-position: 63px -120px; } 75% { background-position: -150px -33px; } }
   .roll { position: absolute; left: 0; right: 0; height: 18%; pointer-events: none; background: linear-gradient(transparent, rgba(255,255,255,.12), rgba(0,0,0,.5), transparent); animation: roll 3.2s linear infinite; }
   @keyframes roll { from { top: -20%; } to { top: 110%; } }
@@ -490,6 +510,7 @@
       "이미지 주소 복사" 후 아래에 순번: "주소" 로 추가
    포스터가 없으면 자동으로 숨겨집니다.
    ════════════════════════════════════════════════ */
+const POSTER_DIR = "";   // 포스터가 저장소 맨 바깥에 있음 (posters 폴더에 넣으면 "posters/" 로)
 const posters = {
   // 97: "https://여기에-이미지-주소.jpg",
 };
@@ -722,7 +743,7 @@ function nextPoster(img) {
   const left = img.dataset.try ? img.dataset.try.split(",") : [];
   if (!left.length) { img.remove(); return; }
   img.dataset.try = left.slice(1).join(",");
-  img.src = `posters/${img.dataset.no}.${left[0]}`;
+  img.src = `${POSTER_DIR}${img.dataset.no}.${left[0]}`;
 }
 
 // ── 기록 리스트 ──
@@ -753,7 +774,7 @@ function renderLog() {
         <span class="badge ${isClear(r) ? "ok" : "no"}">${isClear(r) ? "탈출" : "실패"}</span>
       </button>
       <div class="log-detail">
-        <img class="poster" src="${esc(posters[r.no] || `posters/${r.no}.jpg`)}" data-try="${posters[r.no] ? "" : "png,jpeg,webp"}" data-no="${r.no}" alt="${esc(r.theme)} 포스터" loading="lazy" onerror="nextPoster(this)" onclick="event.stopPropagation(); modal([this.getAttribute('src')], '${esc(r.theme)}')">
+        <img class="poster" src="${esc(posters[r.no] || `${POSTER_DIR}${r.no}.jpg`)}" data-try="${posters[r.no] ? "" : "png,jpeg,webp"}" data-no="${r.no}" alt="${esc(r.theme)} 포스터" loading="lazy" onerror="nextPoster(this)" onclick="event.stopPropagation(); modal([this.getAttribute('src')], '${esc(r.theme)}')">
         <dl>
           <dt>오픈 날짜</dt><dd>${esc(r.open)}</dd>
           <dt>플레이 날짜</dt><dd>${esc(r.date)}</dd>
@@ -780,7 +801,7 @@ function renderTops() {
       const r = records.find(x => x.no === no); if (!r) return "";
       return `<article class="top-card r${i + 1}">
         <div class="rank">${i + 1}</div>
-        <img class="tposter" src="posters/${no}.jpg" alt="${esc(r.theme)} 포스터" loading="lazy" onerror="nextPoster(this)" data-try="png,jpeg,webp" data-no="${no}" onclick="modal([this.getAttribute('src')], '${esc(r.theme)}')">
+        <img class="tposter" src="${POSTER_DIR}${no}.jpg" alt="${esc(r.theme)} 포스터" loading="lazy" onerror="nextPoster(this)" data-try="png,jpeg,webp" data-no="${no}" onclick="modal([this.getAttribute('src')], '${esc(r.theme)}')">
         <div class="tinfo">
           <b>${esc(r.theme)}</b>
           <small>${esc(r.store)} · ${esc(r.region)}</small>
@@ -791,6 +812,71 @@ function renderTops() {
         </div></article>`;
     }).join("");
   }
+}
+
+
+// ── 방탈출 지도 ──
+const REGION_POS = {   // 지도 좌표 (viewBox 520x600)
+  "홍대": [356, 150, "seoul"], "신촌": [410, 130, "seoul"], "건대": [478, 152, "seoul"], "강남": [440, 204, "seoul"],
+  "수원": [170, 200], "대전": [232, 312], "전주": [196, 372], "광주": [160, 462], "부산": [392, 452]
+};
+function renderMap() {
+  const svg = document.getElementById("koMap");
+  const cnt = {}; records.forEach(r => cnt[r.region] = (cnt[r.region] || 0) + 1);
+  const land = "M150 40 C190 20 250 30 300 20 C330 40 360 50 380 80 C395 110 405 150 410 200 C420 250 440 290 440 330 C442 380 430 420 405 450 C380 480 340 495 300 500 C260 505 230 520 200 525 C170 520 140 505 120 480 C100 450 110 420 120 395 C115 365 100 340 110 310 C125 285 140 270 130 245 C115 220 100 200 108 175 C118 150 130 140 125 115 C118 90 125 60 150 40 Z";
+  let h = `<defs><radialGradient id="dotg"><stop offset="0" stop-color="#ffd86a"/><stop offset="1" stop-color="#d9a441" stop-opacity="0"/></radialGradient></defs>
+    <path d="${land}" fill="#211d18" stroke="#4a3f32" stroke-width="2"/>
+    <path d="M300 540 C330 532 360 538 372 548 C360 560 320 562 300 552 Z" fill="#211d18" stroke="#4a3f32" stroke-width="2"/>
+    <circle cx="168" cy="140" r="8" fill="none" stroke="#d9a441" stroke-width="2"/>
+    <path d="M176 136 L322 110" stroke="#6a5a40" stroke-dasharray="4 4"/>
+    <rect x="322" y="90" width="190" height="150" rx="12" fill="#1a1713" stroke="#6a5a40" stroke-dasharray="4 4"/>
+    <path d="M330 178 C380 160 430 186 504 170" stroke="#2c4a5a" stroke-width="7" fill="none" opacity=".7"/>
+    <text x="332" y="108" fill="#8f877a" font-size="11">서울 확대</text>`;
+  const max = Math.max(...Object.values(cnt));
+  for (const [name, [x, y, grp]] of Object.entries(REGION_POS)) {
+    const n = cnt[name] || 0; if (!n) continue;
+    const r = 6 + 16 * Math.sqrt(n / max);
+    h += `<g class="mdot" data-r="${name}" tabindex="0">
+      <circle cx="${x}" cy="${y}" r="${r * 1.9}" fill="url(#dotg)" opacity=".35"/>
+      <circle cx="${x}" cy="${y}" r="${r}" fill="#d9a441" fill-opacity=".85" stroke="#1a1408" stroke-width="2"/>
+      <text x="${x}" y="${y + 4}" text-anchor="middle" font-size="${r > 12 ? 12 : 10}" font-weight="700" fill="#1a1408">${n}</text>
+      <text x="${x + (grp ? 0 : r + 6)}" y="${grp ? y - r - 6 : y + 4}" ${grp ? 'text-anchor="middle"' : ""} font-size="12" fill="#ece6da">${name}</text></g>`;
+  }
+  const abroad = Object.keys(cnt).filter(k => !REGION_POS[k]);
+  abroad.forEach((k, i) => {
+    h += `<g class="mdot" data-r="${k}" tabindex="0"><rect x="384" y="${36 + i * 40 - 36}" width="128" height="30" rx="15" fill="#2a2620" stroke="#d9a441"/>
+      <text x="448" y="${56 + i * 40 - 36}" text-anchor="middle" font-size="12" fill="#ece6da">✈ ${k} ${cnt[k]}</text></g>`;
+  });
+  svg.innerHTML = h;
+  svg.querySelectorAll(".mdot").forEach(g => {
+    const show = () => {
+      svg.querySelectorAll(".mdot").forEach(x => x.classList.remove("on")); g.classList.add("on");
+      const name = g.dataset.r, list = records.filter(r => r.region === name);
+      const clear = list.filter(r => r.clear === "Clear").length;
+      const best = [...list].sort((a, b) => parseFloat(String(b.avg).replace(/[^\d.]/g, "") || 0) - parseFloat(String(a.avg).replace(/[^\d.]/g, "") || 0)).slice(0, 3);
+      document.getElementById("mapInfo").innerHTML = `<b>${esc(name)}</b> <span>${list.length}방 · 탈출 ${clear}</span>
+        <ul>${best.map(r => `<li>${esc(r.theme)} <em class="rate r-${esc(r.rate)}">${esc(r.rate)}</em></li>`).join("")}</ul>
+        <button type="button" class="linkbtn" onclick="document.getElementById('q').value='${esc(name)}'; renderLog(); document.querySelector('.log').scrollIntoView({behavior:'smooth'})">이 지역 기록 보기 →</button>`;
+    };
+    g.onclick = show; g.onkeydown = e => { if (e.key === "Enter") show(); };
+  });
+}
+
+// ── 랜덤 추천 ──
+function pickRandom() {
+  const pool = records.filter(r => ["꽃길", "꽃밭길", "인생테마"].includes(r.rate));
+  const card = document.getElementById("pickCard"), btn = document.getElementById("pickBtn");
+  btn.disabled = true; let n = 0;
+  const spin = () => {
+    const r = pool[Math.floor(Math.random() * pool.length)];
+    card.innerHTML = `<img src="${POSTER_DIR}${r.no}.jpg" data-try="png,jpeg,webp" data-no="${r.no}" onerror="nextPoster(this)" alt="">
+      <div class="pinfo"><b>${esc(r.theme)}</b><small>${esc(r.store)} · ${esc(r.region)}</small>
+      <div class="tmeta"><span class="rate r-${esc(r.rate)}">${esc(r.rate)}</span><span class="tline">${esc(r.avg)}</span></div></div>`;
+    card.classList.toggle("spinning", n < 11);
+    if (n++ < 11) setTimeout(spin, 60 + n * 18);
+    else { btn.disabled = false; btn.textContent = "다시 뽑기"; card.querySelector("img").onclick = function () { modal([this.getAttribute("src")], r.theme); }; }
+  };
+  spin();
 }
 
 function renderCounts() {
@@ -968,8 +1054,8 @@ function footsteps(total) {
 function stopLoops() { clearTimeout(loopTimer); loopTimer = null; }
 
 /* ───────── 파일 사운드 (sounds 폴더) ───────── */
-const files = { bgm: { src: "sounds/bgm.mp3", vol: .55, loop: true }, clock: { src: "sounds/clock.mp3", vol: .9, loop: true },
-                impact: { src: "sounds/impact.mp3", vol: .9 }, jumpscare: { src: "sounds/jumpscare.mp3", vol: 1 } };
+const files = { bgm: { src: "bgm.mp3", vol: .55, loop: true }, clock: { src: "clock.mp3", vol: .9, loop: true },
+                impact: { src: "impact.mp3", vol: .9 }, jumpscare: { src: "jumpscare.mp3", vol: 1 } };
 const players = {};
 function player(name) { if (!players[name]) { const f = files[name], a = new Audio(f.src); a.loop = !!f.loop; a.preload = "auto"; a.volume = 0; players[name] = a; } return players[name]; }
 function fadeTo(a, v, ms, done) { clearInterval(a._f); const st = a.volume, t0 = Date.now();
@@ -994,14 +1080,14 @@ function typeText(el, text, speed = 26, done) {
 function modal(images, title) {
   const m = document.createElement("div");
   m.className = "lightbox";
-  m.innerHTML = `<div class="lb-inner">${title ? `<div class="lb-title">${esc(title)}</div>` : ""}${images.map(s => `<img src="${s.includes("/") ? esc(s) : "img/" + esc(s)}" alt="">`).join("")}</div><span>닫기 ✕</span>`;
+  m.innerHTML = `<div class="lb-inner">${title ? `<div class="lb-title">${esc(title)}</div>` : ""}${images.map(s => `<img src="${s.includes("/") ? esc(s) : esc(s)}" alt="">`).join("")}</div><span>닫기 ✕</span>`;
   m.onclick = e => { if (e.target === m || e.target.tagName === "SPAN") { m.remove(); sfx.click(); } };
   document.body.appendChild(m); sfx.click();
 }
 function stageHTML(sc) {
   if (!sc.image) return "";
-  let inner = `<img class="base" src="img/${esc(sc.image)}" alt="${esc(sc.title)}">`;
-  if (sc.overlay) inner += `<img class="ov ${sc.overlay.fx}" src="img/${esc(sc.overlay.src)}" alt="">`;
+  let inner = `<img class="base" src="${esc(sc.image)}" alt="${esc(sc.title)}">`;
+  if (sc.overlay) inner += `<img class="ov ${sc.overlay.fx}" src="${esc(sc.overlay.src)}" alt="">`;
   if (sc.fog) inner += `<div class="fog"><i></i><i></i><i></i></div>`;
   if (sc.passer) inner += `<div class="passer"><svg viewBox="0 0 100 160"><path d="M50 4 L38 40 C20 44 14 60 16 76 C18 92 30 100 40 102 L40 108 C20 112 6 130 4 160 L96 160 C94 130 80 112 60 108 L60 102 C72 98 84 90 84 74 C86 58 78 44 62 40 Z" fill="#000"/></svg></div>`;
   if (sc.fx === "hide") inner += `<div class="gap" style="clip-path:polygon(${GAP})"><div class="shadow"></div></div>`;
@@ -1046,7 +1132,7 @@ function showIntro() {
       <p class="credit">${esc(quiz.credit)}</p>
       <hr>
       <p class="story">${esc(quiz.premise)}</p>
-      ${quiz.poster ? `<img class="poster-img" src="img/${esc(quiz.poster)}" alt="쭈괴 신입회원 모집 포스터" onclick="modal(['${esc(quiz.poster)}'])">` : ""}
+      ${quiz.poster ? `<img class="poster-img" src="${esc(quiz.poster)}" alt="쭈괴 신입회원 모집 포스터" onclick="modal(['${esc(quiz.poster)}'])">` : ""}
       <hr>
       <p class="sound">🔊 소리를 꼭! 켜고 플레이해 주세요!</p>
       <p class="warn">⚠️ 다수의 공포 요소가 있는 사진들이 나옵니다..<br>무서운 걸 싫어하시는 분들은 플레이하지 말아 주세요 ㅜㅜ</p>
@@ -1176,7 +1262,7 @@ function bindLock(sc, i) {
 function jumpscare(done) {
   playOnce("jumpscare");
   const j = document.createElement("div"); j.className = "jump";
-  j.innerHTML = `<img src="img/jump.jpg" alt=""><div class="jscan"></div>`;
+  j.innerHTML = `<img src="jump.jpg" alt=""><div class="jscan"></div>`;
   document.body.appendChild(j);
   setTimeout(() => { j.remove(); done(); }, 850);
 }
@@ -1189,7 +1275,7 @@ function showClear(sc) {
   screen.innerHTML = `<div class="center"><h3>탈출 성공</h3>
     <p class="story" id="endText"></p>
     <div class="slides" id="slides"><img id="slideImg" alt=""></div>
-    ${sc.photos ? `<div class="photos" id="endPhotos">${sc.photos.map((p, k) => `<img src="img/${esc(p)}" alt="" style="--r:${[-5, 3, -2, 6][k % 4]}deg">`).join("")}</div><p class="tip" id="endTip" style="text-align:center;opacity:0;transition:opacity 1s">명준 선배 폰의 사진첩 · 사진을 눌러 보세요</p>` : ""}
+    ${sc.photos ? `<div class="photos" id="endPhotos">${sc.photos.map((p, k) => `<img src="${esc(p)}" alt="" style="--r:${[-5, 3, -2, 6][k % 4]}deg">`).join("")}</div><p class="tip" id="endTip" style="text-align:center;opacity:0;transition:opacity 1s">명준 선배 폰의 사진첩 · 사진을 눌러 보세요</p>` : ""}
     <p class="end-mark" id="endMark">끝..</p>
     <div class="stat-line">걸린 시간 ${fmt(used)} · 사용한 힌트 ${hintsUsed}개</div><br>
     <button class="btn" id="againBtn">처음부터 다시</button></div>`;
@@ -1201,7 +1287,7 @@ function showClear(sc) {
       const last = k === seq.length - 1;
       img.classList.remove("in"); 
       later(() => {
-        img.src = "img/" + seq[k]; img.className = last ? "final" : "";
+        img.src = seq[k]; img.className = last ? "final" : "";
         void img.offsetWidth; img.classList.add("in");
         if (k === seq.length - 2) later(() => thump(45, .8, .6), 200);   // 이빨 사진에서 쿵
         if (last) {
